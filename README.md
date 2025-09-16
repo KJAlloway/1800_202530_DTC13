@@ -55,8 +55,13 @@ elmo-hikes/
 ---
 
 ## Contributors
+<<<<<<< HEAD
 
 - **Andrii/Andrew** - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Likes food.
+=======
+- Donovan - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Can put a leg behind my head if I try hard enough.
+- Andrew - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Likes food.
+>>>>>>> main
 - **Teammate Name** - BCIT CST Student, Frontend enthusiast with a knack for creative design. Fun fact: Has a collection of over 50 houseplants.
 
 ---
