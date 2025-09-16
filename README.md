@@ -47,12 +47,14 @@ elmo-hikes/
 
 ---
 ## Contributors
-<<<<<<< HEAD
 - Kelsen - BCIT CST Student with 7 years as a professional chef. Fun fact: has a 95lbs mastiff.
+  
 =======
 - Donovan - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Can put a leg behind my head if I try hard enough.
+  
 =======
 - Andrew - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Likes food.
+  
 =======
 
 ---
