@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../styles/style.css">
+    <title>DTC13 PROJECTS</title>
+</head>
+
+
+<body>
+    <nav class="nav_tabs">
+        <div class="tab reminders_nav" data-tab="reminders"><img src="bell.svg" alt="">Reminders</div>
+        <div class="tab home_nav" data-tab="home"><img src="home.svg" alt="">Home</div>
+        <div class="tab settings_nav" data-tab="settings"><img src="settings.svg" alt="">Settings</div>
+    </nav>
+
+    <div class="tab_pages">
+        <div class="tab_page reminders_page">reminder content</div>
+        <div class="tab_page home_page">home content</div>
+        <div class="tab_page settings_page">settings content</div>
+    </div>
+
+    <script>
+        // Grab all tabs and pages
+        const tabs = document.querySelectorAll(".tab");
+        const pages = document.querySelectorAll(".tab_page");
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const target = tab.getAttribute("data-tab");
+
+                // Remove 'active' class from all tabs
+                tabs.forEach(t => t.classList.remove("active"));
+
+                // Hide all pages
+                pages.forEach(p => p.style.display = "none");
+
+                // Set clicked tab as active
+                tab.classList.add("active");
+
+                // Show the matching page
+                const activePage = document.querySelector("." + target + "_page");
+                if (activePage) activePage.style.display = "block";
+            });
+        });
+    </script>
+
+</body>
+
+</html>
