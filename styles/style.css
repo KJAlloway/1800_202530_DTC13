@@ -12,6 +12,13 @@ body {
     padding: 0 20px;
 }
 
+/* IMAGE DISPLAY */
+.nav_tabs img {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
 /* ALL TAB STYLING */
 .tab {
     padding: 10px 20px;
