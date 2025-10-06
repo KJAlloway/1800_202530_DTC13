@@ -21,31 +21,100 @@
         <div class="tab_page home_page">home content</div>
         <div class="tab_page settings_page">settings content</div>
     </div>
+    <!-- POPUP OVERLAY -->
+    <div class="popup_overlay" id="popup">
+        <div class="popup_content">
+            <h2>Welcome Back!</h2>
+            <p>Manage your time efficiently — log in to get started.</p>
+
+            <form class="login_form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" placeholder="you@example.com" required>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+
+                <button type="submit" class="login_btn">Log In</button>
+            </form>
+
+            <button class="close_popup">Close</button>
+        </div>
+    </div>
+
+    <!-- Temporary button to test popup -->
+    <!-- <button id="openPopup" style="margin: 20px;">Open Login</button> -->
 
     <script>
-        // Grab all tabs and pages
-        const tabs = document.querySelectorAll(".tab");
-        const pages = document.querySelectorAll(".tab_page");
+        document.addEventListener("DOMContentLoaded", () => {
+            const tabs = document.querySelectorAll(".tab");
+            const pages = document.querySelectorAll(".tab_page");
 
-        tabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                const target = tab.getAttribute("data-tab");
-
-                // Remove 'active' class from all tabs
+            // Function to show the selected tab
+            function showTab(tabName) {
                 tabs.forEach(t => t.classList.remove("active"));
-
-                // Hide all pages
                 pages.forEach(p => p.style.display = "none");
 
-                // Set clicked tab as active
-                tab.classList.add("active");
+                const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
+                const targetPage = document.querySelector(`.${tabName}_page`);
 
-                // Show the matching page
-                const activePage = document.querySelector("." + target + "_page");
-                if (activePage) activePage.style.display = "block";
+                if (targetTab) targetTab.classList.add("active");
+                if (targetPage) targetPage.style.display = "block";
+            }
+
+            // Attach listeners
+            tabs.forEach(tab => {
+                tab.addEventListener("click", () => {
+                    const tabName = tab.getAttribute("data-tab");
+                    showTab(tabName);
+                });
+            });
+
+            // ✅ Show the default tab when the DOM is ready
+            showTab("home");
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const popup = document.getElementById("popup");
+            const closeBtn = document.querySelector(".close_popup");
+            const form = document.querySelector(".login_form");
+
+            // Check login state
+            const isLoggedIn = localStorage.getItem("loggedIn");
+
+            // ✅ Automatically show popup with fade if not logged in
+            if (!isLoggedIn) {
+                popup.classList.add("show");
+            }
+
+            // Close button hides popup smoothly
+            closeBtn.addEventListener("click", () => {
+                popup.classList.remove("show");
+                setTimeout(() => (popup.style.display = "none"), 400); // wait for fade
+            });
+
+            // Click outside popup hides it
+            popup.addEventListener("click", (e) => {
+                if (e.target === popup) {
+                    popup.classList.remove("show");
+                    setTimeout(() => (popup.style.display = "none"), 400);
+                }
+            });
+
+            // Simulated login — hides popup + remembers login
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                localStorage.setItem("loggedIn", "true");
+                popup.classList.remove("show");
+                setTimeout(() => (popup.style.display = "none"), 400);
+                alert("Login simulated — popup won’t appear next time!");
             });
         });
     </script>
+
+
+
+
 
 </body>
 
