@@ -5,112 +5,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../styles/style.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <title>DTC13 PROJECTS</title>
 </head>
 
 
 <body>
-    <nav class="nav_tabs">
-        <div class="tab reminders_nav" data-tab="reminders"><img src="../styles/bell.svg" alt="">Reminders</div>
-        <div class="tab home_nav" data-tab="home"><img src="../styles/home.svg" alt="">Home</div>
-        <div class="tab settings_nav" data-tab="settings"><img src="../styles/settings.svg" alt="">Settings</div>
-    </nav>
+    <div class="tab-wrapper" id="tabs">
+        <!-- NAVIGATION TABS -->
+        <ul class="nav nav-tabs justify-content-center" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active d-flex align-items-center gap-2" id="reminders-tab" data-bs-toggle="tab"
+                    data-bs-target="#reminders" type="button" role="tab" aria-controls="reminders" aria-selected="true">
+                    <img src="../styles/bell.svg" alt=""> Reminders
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center gap-2" id="home-tab" data-bs-toggle="tab"
+                    data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">
+                    <img src="../styles/home.svg" alt=""> Home
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center gap-2" id="settings-tab" data-bs-toggle="tab"
+                    data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                    <img src="../styles/settings.svg" alt=""> Settings
+                </button>
+            </li>
+        </ul>
 
-    <div class="tab_pages">
-        <div class="tab_page reminders_page">reminder content</div>
-        <div class="tab_page home_page">home content</div>
-        <div class="tab_page settings_page">settings content</div>
-    </div>
-    <!-- POPUP OVERLAY -->
-    <div class="popup_overlay" id="popup">
-        <div class="popup_content">
-            <h2>Welcome Back!</h2>
-            <p>Manage your time efficiently — log in to get started.</p>
+        <!-- TAB PAGES -->
+        <div class="tab-content" id="mainTabsContent">
+            <div class="tab-pane fade show active" id="reminders" role="tabpanel" aria-labelledby="reminders-tab">
+                <h3>Reminders Page</h3>
+                <p>reminder content goes here</p>
+            </div>
 
-            <form class="login_form">
-                <label for="email">Email:</label>
-                <input type="email" id="email" placeholder="you@example.com" required>
+            <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
+                <h3>Home Page</h3>
+                <p>home content goes here</p>
+            </div>
 
-                <label for="password">Password:</label>
-                <input type="password" id="password" placeholder="••••••••" required>
-
-                <button type="submit" class="login_btn">Log In</button>
-            </form>
-
-            <button class="close_popup">Close</button>
+            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                <h3>Settings Page</h3>
+                <p>settings content goes here</p>
+            </div>
         </div>
     </div>
 
-    <!-- Temporary button to test popup -->
-    <!-- <button id="openPopup" style="margin: 20px;">Open Login</button> -->
-
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const tabs = document.querySelectorAll(".tab");
-            const pages = document.querySelectorAll(".tab_page");
-
-            // Function to show the selected tab
-            function showTab(tabName) {
-                tabs.forEach(t => t.classList.remove("active"));
-                pages.forEach(p => p.style.display = "none");
-
-                const targetTab = document.querySelector(`[data-tab="${tabName}"]`);
-                const targetPage = document.querySelector(`.${tabName}_page`);
-
-                if (targetTab) targetTab.classList.add("active");
-                if (targetPage) targetPage.style.display = "block";
-            }
-
-            // Attach listeners
-            tabs.forEach(tab => {
-                tab.addEventListener("click", () => {
-                    const tabName = tab.getAttribute("data-tab");
-                    showTab(tabName);
-                });
-            });
-
-            // ✅ Show the default tab when the DOM is ready
-            showTab("home");
+        window.addEventListener('load', () => {
+            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+            loginModal.show();
         });
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const popup = document.getElementById("popup");
-            const closeBtn = document.querySelector(".close_popup");
-            const form = document.querySelector(".login_form");
 
-            // Check login state
-            const isLoggedIn = localStorage.getItem("loggedIn");
-
-            // ✅ Automatically show popup with fade if not logged in
-            if (!isLoggedIn) {
-                popup.classList.add("show");
-            }
-
-            // Close button hides popup smoothly
-            closeBtn.addEventListener("click", () => {
-                popup.classList.remove("show");
-                setTimeout(() => (popup.style.display = "none"), 400); // wait for fade
-            });
-
-            // Click outside popup hides it
-            popup.addEventListener("click", (e) => {
-                if (e.target === popup) {
-                    popup.classList.remove("show");
-                    setTimeout(() => (popup.style.display = "none"), 400);
-                }
-            });
-
-            // Simulated login — hides popup + remembers login
-            form.addEventListener("submit", (e) => {
-                e.preventDefault();
-                localStorage.setItem("loggedIn", "true");
-                popup.classList.remove("show");
-                setTimeout(() => (popup.style.display = "none"), 400);
-                alert("Login simulated — popup won’t appear next time!");
-            });
-        });
-    </script>
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Welcome Back!</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Manage your time efficiently — log in to get started.</p>
+                    <form>
+                        <div class="mb-3 text-start">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" placeholder="you@example.com" required>
+                        </div>
+                        <div class="mb-3 text-start">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-2">Log In</button>
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 
