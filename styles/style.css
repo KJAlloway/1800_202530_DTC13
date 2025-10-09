@@ -337,3 +337,68 @@ body {
         }
     }
 }
+
+#calendar {
+
+    /* === CONTAINER === */
+    & .calendar-container {
+        padding: 1rem;
+    }
+
+    /* === GRID STRUCTURE === */
+    & .calendar-grid {
+        display: grid;
+        grid-template-columns: 80px repeat(7, 1fr);
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        font-size: 0.85rem;
+    }
+
+    /* === DAY HEADERS (Mon–Sun) === */
+    & .day-header {
+        background: #e0e0e0;
+        padding: 8px;
+        text-align: center;
+        font-weight: 600;
+        border-bottom: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+    }
+
+    /* === HOUR LABELS (Left column) === */
+    & .hour-label {
+        background: #f8f8f8;
+        padding: 6px 10px 6px 0;
+        border-bottom: 1px solid #eee;
+        text-align: right;
+    }
+
+    /* === TIME SLOTS (Clickable cells) === */
+    & .time-slot {
+        border-bottom: 1px solid #eee;
+        border-right: 1px solid #eee;
+        background: #fdfdfd;
+        cursor: pointer;
+        transition: background 0.2s, border 0.2s;
+    }
+
+    /* -- Selected (available) blocks -- */
+    & .time-slot.available {
+        background: #2b82ff;
+        /* deeper blue for clarity */
+        color: white;
+        border: 1px solid #1858c9;
+    }
+
+    /* -- Hover over available block -- */
+    & .time-slot.available:hover {
+        background: #1a6af8;
+        border-color: #0f47b5;
+    }
+
+    /* -- Hover over unselected block -- */
+    & .time-slot:not(.available):hover {
+        background: #98bdf5ac;
+        border: 1px solid #99c2ff;
+    }
+}
