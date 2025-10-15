@@ -402,3 +402,104 @@ body {
         border: 1px solid #99c2ff;
     }
 }
+
+#home {
+    .home-container {
+        padding: 1rem;
+        padding-bottom: 200px;
+        overflow-y: auto;
+        max-height: 100vh;
+        scroll-behavior: smooth;
+    }
+
+    .floating-ui {
+        position: fixed;
+        left: 50%;
+        bottom: 85px;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: center;
+        z-index: 300;
+        width: 100%;
+        pointer-events: none;
+    }
+
+    .floating-ui>* {
+        pointer-events: auto;
+    }
+
+    .add-btn {
+        border-radius: 40px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+        transition: transform .3s ease, box-shadow .3s ease;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+    }
+
+    .form-popup {
+        opacity: 0;
+        transform: translateY(100%);
+        transition: transform .45s ease, opacity .45s ease;
+        width: 95%;
+        max-width: 900px;
+        margin-bottom: 10px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .form-popup.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    #noTasksMsg {
+        opacity: 0;
+        transform: translateY(5px);
+        transition: opacity .4s ease, transform .4s ease;
+        height: 0;
+        overflow: hidden;
+    }
+
+    #noTasksMsg.visible {
+        opacity: 1;
+        transform: translateY(0);
+        height: auto;
+        margin-top: 1rem;
+    }
+
+    @media (max-width:768px) {
+        .add-btn {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .3);
+        }
+
+        .add-btn::after {
+            content: "+";
+            font-size: 2.3rem;
+            position: relative;
+            top: -3px;
+        }
+
+        .add-btn[aria-expanded="true"]::after {
+            content: "×";
+            font-size: 2.6rem;
+            top: -4px;
+        }
+    }
+}

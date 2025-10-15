@@ -53,8 +53,53 @@
             </div>
 
             <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
-                <h3>Home Page</h3>
-                <p>home content goes here</p>
+                <div class="home-container container py-4">
+                    <h3 class="text-center mb-4">My Tasks</h3>
+
+                    <!-- Task Cards -->
+                    <div id="taskList" class="row gy-3"></div>
+                    <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
+
+                    <!-- Floating Button + Slide-Up Form -->
+                    <div class="floating-ui">
+                        <button id="toggleTaskForm" class="btn btn-primary add-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#taskFormCollapse" aria-expanded="false"
+                            aria-controls="taskFormCollapse">
+                            + Add Task / Assignment
+                        </button>
+
+                        <div class="collapse form-popup" id="taskFormCollapse">
+                            <form id="taskForm" class="p-3 bg-white rounded shadow-sm">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label for="taskName" class="form-label">Task / Assignment</label>
+                                        <input type="text" class="form-control" id="taskName"
+                                            placeholder="e.g. COMP 1510 Lab 5" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="dueDate" class="form-label">Due Date</label>
+                                        <input type="date" class="form-control" id="dueDate" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="timeNeeded" class="form-label">Estimated Time (hrs)</label>
+                                        <input type="number" class="form-control" id="timeNeeded" min="0.5" step="0.5"
+                                            required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="importance" class="form-label">Importance</label>
+                                        <input type="range" class="form-range" id="importance" min="1" max="5" step="1"
+                                            value="3">
+                                        <div class="text-center small text-muted">1 = Low, 5 = High</div>
+                                    </div>
+                                </div>
+
+                                <div class="text-end mt-3">
+                                    <button type="submit" class="btn btn-success">Add Task</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
@@ -139,6 +184,101 @@
             }
         });
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const taskForm = document.getElementById("taskForm");
+            const taskList = document.getElementById("taskList");
+            const noTasksMsg = document.getElementById("noTasksMsg");
+            const toggleBtn = document.getElementById("toggleTaskForm");
+            const collapseEl = document.getElementById("taskFormCollapse");
+            const bsCollapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+            function getPriorityColor(task) {
+                const now = new Date();
+                const due = new Date(task.dueDate);
+                const hoursLeft = (due - now) / (1000 * 60 * 60);
+                const importance = task.importance || 3;
+                const timeNeeded = parseFloat(task.timeNeeded) || 1;
+                const proximity = Math.max(0, 72 - hoursLeft);
+                const urgency = importance * 10 + proximity + Math.min(timeNeeded * 5, 30);
+                return urgency > 80 ? "bg-danger" : urgency > 50 ? "bg-warning" : "bg-success";
+            }
+
+            function renderTasks() {
+                taskList.innerHTML = "";
+                if (tasks.length === 0) noTasksMsg.classList.add("visible");
+                else noTasksMsg.classList.remove("visible");
+
+                tasks.forEach((task, i) => {
+                    const due = new Date(task.dueDate);
+                    const date = due.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+                    const color = `${getPriorityColor(task)} pulse`;
+                    const card = document.createElement("div");
+                    card.className = "col-12 col-md-6 col-lg-4";
+                    card.innerHTML = `
+        <div class="card shadow-sm border-0 ${task.completed ? "opacity-50" : ""}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="card-title mb-0 ${task.completed ? "text-decoration-line-through" : ""}">
+                ${task.name}
+              </h5>
+              <span class="badge ${color}">${task.importance}/5</span>
+            </div>
+            <p class="card-text mb-1"><strong>Due:</strong> ${date}</p>
+            <p class="card-text mb-2"><strong>Est. Time:</strong> ${task.timeNeeded} hrs</p>
+            <div class="progress mb-2" style="height:6px;">
+              <div class="progress-bar ${color}" style="width:100%"></div>
+            </div>
+            <div class="d-flex justify-content-between">
+              <button class="btn btn-sm ${task.completed ? "btn-secondary" : "btn-success"} toggle-complete">
+                ${task.completed ? "Undo" : "Complete"}
+              </button>
+              <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>
+            </div>
+          </div>
+        </div>`;
+                    card.querySelector(".toggle-complete").addEventListener("click", () => {
+                        tasks[i].completed = !tasks[i].completed;
+                        saveTasks();
+                    });
+                    card.querySelector(".delete-task").addEventListener("click", () => {
+                        tasks.splice(i, 1);
+                        saveTasks();
+                    });
+                    taskList.appendChild(card);
+                });
+            }
+
+            function saveTasks() {
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+                renderTasks();
+            }
+
+            taskForm.addEventListener("submit", e => {
+                e.preventDefault();
+                const name = document.getElementById("taskName").value.trim();
+                const dueDate = document.getElementById("dueDate").value;
+                const timeNeeded = parseFloat(document.getElementById("timeNeeded").value);
+                const importance = parseInt(document.getElementById("importance").value);
+                if (!name || !dueDate || isNaN(timeNeeded)) return;
+                tasks.push({ name, dueDate, timeNeeded, importance, completed: false });
+                saveTasks();
+                taskForm.reset();
+                bsCollapse.hide();
+            });
+
+            collapseEl.addEventListener("show.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "true"));
+            collapseEl.addEventListener("hide.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "false"));
+
+            renderTasks();
+            setInterval(renderTasks, 60000);
+        });
+
+    </script>
+
+
 
 </body>
 
