@@ -195,86 +195,115 @@
 
             let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+            // Where the colors are calculated based on priority //
             function getPriorityColor(task) {
                 const now = new Date();
-                const due = new Date(task.dueDate);
+
+                // This is how it is converted to local time, otherwise it'd be in UTC for javascript //
+                const [year, month, day] = task.dueDate.split("-").map(Number);
+                const due = new Date(year, month - 1, day);
+
+                // Converting to hours //
                 const hoursLeft = (due - now) / (1000 * 60 * 60);
+                // Technically not needed but it's a safety if there were to be no importance inputted
+                // Basically this returns the value unless if it's 0, NaN, etc. Numbers similar to that.
                 const importance = task.importance || 3;
                 const timeNeeded = parseFloat(task.timeNeeded) || 1;
                 const proximity = Math.max(0, 72 - hoursLeft);
                 const urgency = importance * 10 + proximity + Math.min(timeNeeded * 5, 30);
+
                 return urgency > 80 ? "bg-danger" : urgency > 50 ? "bg-warning" : "bg-success";
             }
+
 
             function renderTasks() {
                 taskList.innerHTML = "";
                 if (tasks.length === 0) noTasksMsg.classList.add("visible");
                 else noTasksMsg.classList.remove("visible");
 
-                tasks.forEach((task, i) => {
+                // Loop that will go through the tasks and create cards //
+                tasks.forEach((task, index) => {
                     const due = new Date(task.dueDate);
                     const date = due.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-                    const color = `${getPriorityColor(task)} pulse`;
+                    const colorClass = getPriorityColor(task);
+
+                    // Exact strip colors for customization //
+                    const stripColor =
+                        colorClass === "bg-danger" ? "#dc3545" :
+                            colorClass === "bg-warning" ? "#ffc107" :
+                                "#198754";
+
+                    // Actual task card creation baseplate //
                     const card = document.createElement("div");
                     card.className = "col-12 col-md-6 col-lg-4";
                     card.innerHTML = `
-        <div class="card shadow-sm border-0 ${task.completed ? "opacity-50" : ""}">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h5 class="card-title mb-0 ${task.completed ? "text-decoration-line-through" : ""}">
-                ${task.name}
-              </h5>
-              <span class="badge ${color}">${task.importance}/5</span>
-            </div>
-            <p class="card-text mb-1"><strong>Due:</strong> ${date}</p>
-            <p class="card-text mb-2"><strong>Est. Time:</strong> ${task.timeNeeded} hrs</p>
-            <div class="progress mb-2" style="height:6px;">
-              <div class="progress-bar ${color}" style="width:100%"></div>
-            </div>
-            <div class="d-flex justify-content-between">
-              <button class="btn btn-sm ${task.completed ? "btn-secondary" : "btn-success"} toggle-complete">
-                ${task.completed ? "Undo" : "Complete"}
-              </button>
-              <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>
-            </div>
-          </div>
-        </div>`;
+                            <div class="card shadow-sm position-relative border-0 border-start border-4 ${colorClass.replace('bg', 'border')
+                                }">
+                                <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h5 class="card-title mb-0 ${task.completed ? "text-decoration-line-through" : ""}">
+                                    ${task.name}
+                                    </h5>
+                                    <span class="badge ${colorClass} text-light">${task.importance}/5</span>
+                                </div>
+                                <p class="card-text mb-1"><strong>Due:</strong> ${date}</p>
+                                <div class="progress mb-2" style="height:6px;">
+                                    <div class="progress-bar ${colorClass}" style="width:100%"></div>
+                                </div>
+                                <p class="card-text mb-2"><strong>Est. Time:</strong> ${task.timeNeeded} hrs</p>
+                                <div class="d-flex justify-content-between">
+                                <button class="btn btn-sm ${task.completed ? "btn-secondary" : "btn-success"} toggle-complete">
+                                    ${task.completed ? "Undo" : "Complete"}
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    // Toggling the task completion status //
                     card.querySelector(".toggle-complete").addEventListener("click", () => {
-                        tasks[i].completed = !tasks[i].completed;
+                        tasks[index].completed = !tasks[index].completed;
                         saveTasks();
                     });
+
+                    // Deletion of the desired task //
                     card.querySelector(".delete-task").addEventListener("click", () => {
-                        tasks.splice(i, 1);
+                        tasks.splice(index, 1);
                         saveTasks();
                     });
                     taskList.appendChild(card);
                 });
-            }
 
-            function saveTasks() {
-                localStorage.setItem("tasks", JSON.stringify(tasks));
+                // Function to save the task //
+                function saveTasks() {
+                    localStorage.setItem("tasks", JSON.stringify(tasks));
+                    renderTasks();
+                }
+
+                    // The handling of the submissions for adding a new task //
+                    taskForm.addEventListener("submit", event => {
+                        event.preventDefault();
+                        const name = document.getElementById("taskName").value.trim();
+                        const dueDate = document.getElementById("dueDate").value; // keep as string
+                        const timeNeeded = parseFloat(document.getElementById("timeNeeded").value);
+                        const importance = parseInt(document.getElementById("importance").value);
+    
+                        if (!name || !dueDate || isNaN(timeNeeded)) return;
+
+                        // The part for saving tasks
+                        tasks.push({ name, dueDate, timeNeeded, importance, completed: false });
+                        saveTasks();
+                        taskForm.reset();
+                        bsCollapse.hide();
+                    });
+    
+                    collapseEl.addEventListener("show.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "true"));
+                    collapseEl.addEventListener("hide.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "false"));
+                }
+    
                 renderTasks();
-            }
-
-            taskForm.addEventListener("submit", e => {
-                e.preventDefault();
-                const name = document.getElementById("taskName").value.trim();
-                const dueDate = document.getElementById("dueDate").value;
-                const timeNeeded = parseFloat(document.getElementById("timeNeeded").value);
-                const importance = parseInt(document.getElementById("importance").value);
-                if (!name || !dueDate || isNaN(timeNeeded)) return;
-                tasks.push({ name, dueDate, timeNeeded, importance, completed: false });
-                saveTasks();
-                taskForm.reset();
-                bsCollapse.hide();
+                setInterval(renderTasks, 60000);
             });
-
-            collapseEl.addEventListener("show.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "true"));
-            collapseEl.addEventListener("hide.bs.collapse", () => toggleBtn.setAttribute("aria-expanded", "false"));
-
-            renderTasks();
-            setInterval(renderTasks, 60000);
-        });
 
     </script>
 
