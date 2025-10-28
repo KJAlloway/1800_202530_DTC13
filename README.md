@@ -1,10 +1,13 @@
 # Elmo Hikes
+
 ## Overview
+
 Elmo Hikes is a client-side JavaScript web application that helps users discover and explore hiking trails. The app displays a curated list of hike trails, each with details such as name, location, difficulty, and an image. Users can browse the list and mark their favorite trails for easy access later.
 
 Developed for the COMP 1800 course, this project applies User-Centred Design practices and agile project management, and demonstrates integration with Firebase backend services for storing user favorites.
 
 ---
+
 ## Features
 
 - Browse a list of curated hiking trails with images and details
@@ -13,15 +16,18 @@ Developed for the COMP 1800 course, this project applies User-Centred Design pra
 - Responsive design for desktop and mobile
 
 ---
+
 ## Technologies Used
 
 Example:
+
 - **Frontend**: HTML, CSS, JavaScript
 - **Build Tool**: [Vite](https://vitejs.dev/)
 - **Backend**: Firebase for hosting
 - **Database**: Firestore
 
 ---
+
 ## Usage
 
 1. Open your browser and visit `http://localhost:3000`.
@@ -30,6 +36,7 @@ Example:
 4. View your favorite hikes in the favorites section.
 
 ---
+
 ## Project Structure
 
 ```
@@ -46,18 +53,15 @@ elmo-hikes/
 ```
 
 ---
+
 ## Contributors
+
 - Kelsen - BCIT CST Student with 7 years as a professional chef. Fun fact: has a 95lbs mastiff.
-  
-=======
 - Donovan - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Can put a leg behind my head if I try hard enough.
-  
-=======
 - Andrew - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Likes food.
-  
-=======
 
 ---
+
 ## Acknowledgments
 
 - Trail data and images are for demonstration purposes only.
@@ -65,7 +69,9 @@ elmo-hikes/
 - Icons sourced from [FontAwesome](https://fontawesome.com/) and images from [Unsplash](https://unsplash.com/).
 
 ---
+
 ## Limitations and Future Work
+
 ### Limitations
 
 - Limited trail details (e.g., no live trail conditions).
@@ -78,6 +84,7 @@ elmo-hikes/
 - Create a dark mode for better usability in low-light conditions.
 
 ---
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
