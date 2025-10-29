@@ -8,9 +8,11 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "sass": "^1.93.2",
     "vite": "^7.0.0"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "firebase": "^12.4.0"
   }
 }
