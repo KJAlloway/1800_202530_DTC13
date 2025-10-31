@@ -247,100 +247,139 @@ body {
     }
 }
 
-/* ===== Calendar ===== */
+/* =========================
+   Square weekly grid — 7AM–12AM
+   ========================= */
+:root {
+    --cal-line: rgba(0, 0, 0, 0.18);
+    /* grid line color */
+    --cal-row-h: 44px;
+    /* row height */
+}
+
+/* ============================================
+   CALENDAR SECTION — clean square grid
+   ============================================ */
+
+:root {
+    --cal-line: rgba(0, 0, 0, 0.18);
+    --cal-row-h: 44px;
+}
+
 #calendar {
-    overflow-x: hidden;
-    /* no horizontal scroll needed now */
-    -webkit-overflow-scrolling: touch;
+    margin: 0;
+    padding: 0;
+}
 
-    #calendarGrid {
-        display: grid;
+/* --- Grid layout --- */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(7, minmax(0, 1fr));
+    grid-auto-rows: var(--cal-row-h);
+    gap: 0;
+    background: var(--bs-body-bg);
+    position: relative;
+}
 
-        /* 1 narrow time column + 7 flexible day columns that can shrink */
-        grid-template-columns: 40px repeat(7, minmax(0, 1fr));
-        gap: 2px;
+.calendar-grid * {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    margin: 0;
+    padding: 0;
+}
 
-        /* let the grid size to its container */
-        width: 100%;
+.calendar-grid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    outline: 1px solid var(--cal-line);
+}
 
-        .corner-cell {
-            height: 32px;
-        }
+/* --- Cells --- */
+.corner-cell,
+.day-header,
+.hour-label,
+.time-slot {
+    background: var(--bs-body-bg);
+    border-top: 1px solid var(--cal-line);
+    border-left: 1px solid var(--cal-line);
+    height: var(--cal-row-h);
+    min-height: var(--cal-row-h);
+}
 
-        .day-header {
-            text-align: center;
-            font-weight: 600;
-            line-height: 32px;
-            white-space: nowrap;
-            font-size: 0.9rem;
-        }
+/* --- Headers --- */
+.day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    line-height: 1;
+}
 
-        .hour-label {
-            /* must match first track width */
-            width: 40px;
-            text-align: right;
-            padding-right: 6px;
-            font-size: 0.7rem;
-            line-height: 32px;
-            color: #6c757d;
-            /* no min-width here—allows shrinking */
-        }
+.day-header>small {
+    color: var(--bs-secondary-color);
+    margin-top: 2px;
+    font-size: 0.7rem;
+}
 
-        .time-slot {
-            height: 32px;
-            border-radius: 6px;
-            background: #f3f4f6;
-            border: 1px solid #e5e7eb;
-            cursor: pointer;
+/* --- Time column --- */
+.hour-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 0.9rem;
+    color: var(--bs-secondary-color);
+    line-height: var(--cal-row-h);
+    height: var(--cal-row-h);
+}
 
-            &.available {
-                background: #cff0d4;
-                border-color: #9ad0a3;
-            }
-        }
+/* --- Time slots --- */
+.time-slot {
+    position: relative;
+    overflow: hidden;
+    background: var(--bs-body-bg);
+}
 
-        /* Small phones */
-        @media (max-width: 576px) {
+/* Study time cells — dark blue fill */
+.time-slot.study {
+    background: rgb(45, 74, 220);
+    border: none;
+    background-clip: padding-box;
+}
 
-            /* use & so rules apply to the same #calendarGrid */
-            & {
-                grid-template-columns: 36px repeat(7, minmax(0, 1fr));
-                gap: 1px;
-            }
 
-            .hour-label {
-                width: 36px;
-                font-size: 0.6rem;
-                padding-right: 4px;
-                line-height: 28px;
-            }
+/* --- Label chip --- */
+.time-slot .study-label {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 1;
+    display: inline-block;
+    text-align: center;
+    padding: 2px 1px;
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1.1;
+    color: #f6f2f2;
+    pointer-events: none;
 
-            .day-header {
-                font-size: 0.8rem;
-                line-height: 28px;
-            }
+}
 
-            .time-slot {
-                height: 28px;
-                border-radius: 5px;
-            }
-        }
 
-        /* Very small devices */
-        @media (max-width: 380px) {
-            & {
-                grid-template-columns: 32px repeat(7, minmax(0, 1fr));
-            }
+/* --- Mobile responsive --- */
+@media (max-width: 576px) {
+    .calendar-grid {
+        grid-template-columns: 36px repeat(7, minmax(0, 1fr));
+        gap: 0;
+    }
 
-            .hour-label {
-                width: 32px;
-                font-size: 0.6rem;
-            }
-
-            .day-header {
-                font-size: 0.75rem;
-            }
-        }
+    .hour-label {
+        font-size: 0.65rem;
+        padding-right: 4px;
+        font-weight: 600;
     }
 }
 
@@ -352,6 +391,11 @@ body {
         overflow-y: auto;
         max-height: 100vh;
         scroll-behavior: smooth;
+    }
+
+    .auth-panel {
+        max-width: 480px;
+        margin: 2rem auto;
     }
 
     .floating-ui {
@@ -512,4 +556,23 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+// Speed up collapse open/close animation
+.collapse {
+    display: block !important; // ensure measurable height during animation
+    overflow: hidden;
+    height: 0;
+    transition: height 0.1s ease !important;
+}
+
+.collapse.show {
+    height: auto;
+}
+
+.collapsing {
+    position: relative;
+    height: 0;
+    overflow: hidden;
+    transition: height 0.1s ease !important;
 }

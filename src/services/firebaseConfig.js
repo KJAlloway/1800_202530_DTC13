@@ -4,8 +4,9 @@ import {
     signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut
 } from "firebase/auth";
 import {
-    getFirestore, doc, setDoc, getDoc, updateDoc, addDoc, deleteDoc,
-    collection, onSnapshot, serverTimestamp, query, where, orderBy, getDocs
+    initializeFirestore, doc, setDoc, getDoc, updateDoc, addDoc, deleteDoc,
+    collection, onSnapshot, serverTimestamp, query, where, orderBy, getDocs,
+    deleteField, getDocFromServer
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -18,11 +19,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+const db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+    useFetchStreams: true
+});
 
 export {
     app, auth, db,
     onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut,
-    doc, setDoc, getDoc, updateDoc, addDoc, deleteDoc, collection, onSnapshot, serverTimestamp,
-    query, where, orderBy, getDocs
+    doc, setDoc, getDoc, updateDoc, addDoc, deleteDoc,
+    collection, onSnapshot, serverTimestamp, query, where, orderBy, getDocs,
+    deleteField, getDocFromServer
 };
