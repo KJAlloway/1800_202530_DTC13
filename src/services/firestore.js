@@ -5,6 +5,8 @@ import {
     query, orderBy, serverTimestamp, getDocs
 } from './firebaseConfig.js';
 
+import { saveTasksLocally } from './localStorages.js';
+
 // ----- Tasks -----
 export async function addTask(task) {
     const u = auth.currentUser; if (!u) throw new Error('Not authed');
@@ -98,3 +100,10 @@ export async function deleteAllUserData() {
     }
     await deleteDoc(doc(db, 'users', u.uid));
 }
+
+// localStorage
+watchTasks((tasks) => {
+    state.tasks = tasks;
+    renderTasks();
+    saveTasksLocally(tasks); //
+});

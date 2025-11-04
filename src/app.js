@@ -7,10 +7,11 @@ import { buildCalendarGrid, hydrateCalendarFromState, refilterVisibleWeek } from
 import { DAYS } from './calendar/constants.js';
 import { visibleWeekRange, now as nowFn } from './calendar/range.js';
 import { addStudyBlockForWindow, deleteStudyBlock } from './services/firestore.js';
+import { loadTasksFromLocal } from './services/localStorages.js';
 
 // Local app state (same shape as before)
 const state = {
-    tasks: [],
+    tasks: loadTasksFromLocal(), // <-- For localStorage
     eventsAll: [],
     studyAll: [],
     studyBlocks: [],
