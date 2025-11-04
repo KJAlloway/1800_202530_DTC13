@@ -1,6 +1,6 @@
 // app.js
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./style.scs";
+import "./style.scss";
 
 import { attachAuthFlows } from "./auth/flows.js";
 import {
