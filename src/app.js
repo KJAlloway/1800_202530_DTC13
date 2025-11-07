@@ -83,4 +83,4 @@ window.addEventListener("DOMContentLoaded", () => {
   attachAuthFlows(state, now);
 });
 
-export { state, now, refilterVisibleWeek }; // used by other modules if needed
+export { state, now, refilterVisibleWeek };

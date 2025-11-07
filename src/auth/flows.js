@@ -1,11 +1,22 @@
-// auth/flows.js
+// src/auth/flows.js
 import { Modal } from 'bootstrap';
-import { auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from '../services/firebaseConfig.js';
+import {
+    auth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+} from '../services/firebaseConfig.js';
+
+import { addTask, watchTasks, addStudyBlockForWindow, deleteStudyBlock } from '../services/firestore.js';
+import { saveTasksLocally } from '../services/localStorages.js';
 import { attachTaskForm } from '../features/tasks/form.js';
 import { attachScaffolding, onAuthed, onLoggedOut, attachSettingsActions } from './ui.js';
 import { prettyAuthError } from './pretty.js';
+import { renderTasks } from '../calendar/grid.js';
 
 export function attachAuthFlows(state, now) {
+    // Setup scaffolding + UI
     attachScaffolding(state, now);
     attachTaskForm();
     attachSettingsActions(signOut, auth);
@@ -21,13 +32,19 @@ export function attachAuthFlows(state, now) {
         const email = authEmailEl?.value?.trim();
         const pw = pwEl?.value || '';
         if (!email || !pw) return;
+
         try {
             await signInWithEmailAndPassword(auth, email, pw);
             clearAuthError();
         } catch (err) {
             if (err?.code === 'auth/user-not-found') {
-                try { await createUserWithEmailAndPassword(auth, email, pw); clearAuthError(); return; }
-                catch (e2) { showAuthError(prettyAuthError(e2)); }
+                try {
+                    await createUserWithEmailAndPassword(auth, email, pw);
+                    clearAuthError();
+                    return;
+                } catch (e2) {
+                    showAuthError(prettyAuthError(e2));
+                }
             } else {
                 showAuthError(prettyAuthError(err));
             }
@@ -59,13 +76,31 @@ export function attachAuthFlows(state, now) {
         }
     });
 
-    // Auth state
+    // Auth state listener
     let unsub = null;
     onAuthStateChanged(auth, async (user) => {
         if (unsub) { unsub(); unsub = null; }
         if (user) {
+            console.log("[AUTH] Signed in as:", user.email);
+            state.user = user;
+
             unsub = onAuthed(user, state, now);
+
+            // Load tasks + save to localStorage
+            watchTasks((tasks) => {
+                state.tasks = tasks;
+                renderTasks(state);
+                saveTasksLocally(tasks);
+            });
+
+            // Load study blocks
+            watchStudyBlocks((blocks) => {
+                state.studyBlocks = blocks;
+                buildCalendarGrid(state.weekOffset);
+            });
         } else {
+            console.warn("[AUTH] User signed out");
+            state.user = null;
             onLoggedOut();
             const homeTabBtn = document.querySelector('#home-tab');
             if (homeTabBtn) (await import('bootstrap')).Tab.getOrCreateInstance(homeTabBtn).show();
