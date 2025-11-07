@@ -2,63 +2,83 @@
 import { calculatePriority, calculateUrgency, calculateSlackMargin } from '../../priority.js';
 import { toggleTaskComplete, deleteTask } from '../../services/firestore.js';
 
-function overlapMs(aStart, aEnd, bStart, bEnd) {
-    const s = Math.max(aStart.getTime(), bStart.getTime());
-    const e = Math.min(aEnd.getTime(), bEnd.getTime());
-    return Math.max(0, e - s);
+// Combine overlapping study intervals
+function mergeIntervals(intervals) {
+  if (!intervals.length) return [];
+  const arr = intervals
+    .map(i => ({ start: new Date(i.start), end: new Date(i.end) }))
+    .filter(i => i.end > i.start)
+    .sort((a, b) => a.start - b.start);
+
+  const merged = [arr[0]];
+  for (let i = 1; i < arr.length; i++) {
+    const prev = merged[merged.length - 1];
+    const cur = arr[i];
+    if (cur.start <= prev.end) {
+      if (cur.end > prev.end) prev.end = cur.end;
+    } else {
+      merged.push(cur);
+    }
+  }
+  return merged;
 }
 
+// Count study minutes from now until end-of-day on due date,
+// using ALL study blocks (state.studyAll).
 function studyMinutesUntil(dueDateStr, state, now) {
-    const n = now();
-    const due = new Date(`${dueDateStr}T23:59:59`);
-    if (Number.isNaN(due.getTime()) || due <= n) return 0;
+  const n = now();
+  const due = new Date(`${dueDateStr}T23:59:59`);
+  if (Number.isNaN(due.getTime()) || due <= n) return 0;
 
-    let minutes = 0;
-    for (const block of state.studyBlocks) {
-        const segStart = new Date(Math.max(block.start.getTime(), n.getTime()));
-        const segEnd = new Date(Math.min(block.end.getTime(), due.getTime()));
-        if (segEnd <= segStart) continue;
+  const clipped = [];
+  for (const b of state.studyAll) {
+    const start = b.start instanceof Date ? b.start : new Date(b.start);
+    const end = b.end instanceof Date ? b.end : new Date(b.end);
+    if (!(start < due && end > n)) continue;
+    const segStart = new Date(Math.max(start.getTime(), n.getTime()));
+    const segEnd = new Date(Math.min(end.getTime(), due.getTime()));
+    if (segEnd > segStart) clipped.push({ start: segStart, end: segEnd });
+  }
 
-        let busyMs = 0;
-        for (const ev of state.events) busyMs += overlapMs(segStart, segEnd, ev.start, ev.end);
-        const freeMs = Math.max(0, (segEnd - segStart) - busyMs);
-        minutes += freeMs / 60000;
-    }
-    return minutes;
+  const merged = mergeIntervals(clipped);
+  let minutes = 0;
+  for (const seg of merged) minutes += (seg.end - seg.start) / 60000;
+  return minutes;
 }
 
 function priorityForTask(task, state, now) {
-    const studyMins = studyMinutesUntil(task.dueDate, state, now);
-    const timeAvail = studyMins / 60;
-    const margin = calculateSlackMargin(task.timeNeeded, timeAvail);
-    const urgency = calculateUrgency(margin);
-    const score = calculatePriority(urgency, task.importance ?? 3);
-    return { timeAvail, margin, urgency, score };
+  const studyMins = studyMinutesUntil(task.dueDate, state, now);
+  const timeAvail = studyMins / 60;
+  const margin = calculateSlackMargin(task.timeNeeded, timeAvail);
+  const urgency = calculateUrgency(margin);
+  const score = calculatePriority(urgency, task.importance ?? 3);
+  return { timeAvail, margin, urgency, score };
 }
 
+
 export function renderTasks(state, now) {
-    const list = document.getElementById('taskList');
-    const emptyMsg = document.getElementById('noTasksMsg');
-    if (!list) return;
+  const list = document.getElementById('taskList');
+  const emptyMsg = document.getElementById('noTasksMsg');
+  if (!list) return;
 
-    const scored = state.tasks
-        .map(t => ({ t, p: priorityForTask(t, state, now) }))
-        .sort((a, b) => b.p.score - a.p.score);
+  const scored = state.tasks
+    .map(t => ({ t, p: priorityForTask(t, state, now) }))
+    .sort((a, b) => b.p.score - a.p.score);
 
-    list.innerHTML = '';
-    if (emptyMsg) emptyMsg.classList.toggle('visible', scored.length === 0);
+  list.innerHTML = '';
+  if (emptyMsg) emptyMsg.classList.toggle('visible', scored.length === 0);
 
-    scored.forEach(({ t, p }) => {
-        const due = new Date(t.dueDate);
-        const date = isNaN(due) ? '—' : due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        const urgency = p.urgency;
-        const color =
-            urgency >= 5 ? 'border-danger' :
-                urgency >= 3 ? 'border-warning' : 'border-success';
+  scored.forEach(({ t, p }) => {
+    const due = new Date(t.dueDate);
+    const date = isNaN(due) ? '—' : due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const urgency = p.urgency;
+    const color =
+      urgency >= 5 ? 'border-danger' :
+        urgency >= 3 ? 'border-warning' : 'border-success';
 
-        const col = document.createElement('div');
-        col.className = 'col-12 col-md-6 col-lg-4';
-        col.innerHTML = `
+    const col = document.createElement('div');
+    col.className = 'col-12 col-md-6 col-lg-4';
+    col.innerHTML = `
       <div class="card shadow-sm border-0 border-start border-4 ${color}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
@@ -77,13 +97,13 @@ export function renderTasks(state, now) {
         </div>
       </div>`;
 
-        col.querySelector('.toggle-complete')?.addEventListener('click', async () => {
-            await toggleTaskComplete(t.id, !t.completed);
-        });
-        col.querySelector('.delete-task')?.addEventListener('click', async () => {
-            await deleteTask(t.id);
-        });
-
-        list.appendChild(col);
+    col.querySelector('.toggle-complete')?.addEventListener('click', async () => {
+      await toggleTaskComplete(t.id, !t.completed);
     });
+    col.querySelector('.delete-task')?.addEventListener('click', async () => {
+      await deleteTask(t.id);
+    });
+
+    list.appendChild(col);
+  });
 }

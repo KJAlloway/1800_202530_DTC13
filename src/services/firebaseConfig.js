@@ -32,3 +32,24 @@ export {
     collection, onSnapshot, serverTimestamp, query, where, orderBy, getDocs,
     deleteField, getDocFromServer
 };
+// // Import the functions you need from the SDKs you need
+// import { initializeApp } from "firebase/app";
+// import { getAnalytics } from "firebase/analytics";
+// // TODO: Add SDKs for Firebase products that you want to use
+// // https://firebase.google.com/docs/web/setup#available-libraries
+
+// // Your web app's Firebase configuration
+// // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// const firebaseConfig = {
+//     apiKey: "AIzaSyATaRP_xJNbvKsIJE_qLnwNLD8pXFvpqME",
+//     authDomain: "dtc-13.firebaseapp.com",
+//     projectId: "dtc-13",
+//     storageBucket: "dtc-13.firebasestorage.app",
+//     messagingSenderId: "526487767721",
+//     appId: "1:526487767721:web:29f17d936f5bf2d9b7f7b8",
+//     measurementId: "G-X13ZDNYM57"
+// };
+
+// // Initialize Firebase
+// const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
