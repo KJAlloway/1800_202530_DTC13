@@ -34,15 +34,15 @@ export function attachScaffolding(state, now) {
     document.getElementById('authPanel')?.classList.remove('d-none');
     document.getElementById('homeApp')?.classList.add('d-none');
 
-    document.getElementById('prevWeekBtn')?.addEventListener('click', () => {
-        state.weekOffset -= 1;
-        buildCalendarGrid(state.weekOffset);
-        refilterVisibleWeek(state, () => renderTasks(state, now));
-    });
-    document.getElementById('nextWeekBtn')?.addEventListener('click', () => {
-        state.weekOffset += 1;
-        buildCalendarGrid(state.weekOffset);
-        refilterVisibleWeek(state, () => renderTasks(state, now));
+    // ONE delegated listener for both mobile + desktop buttons
+    document.getElementById('calendarPage')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-week-nav]');
+        if (!btn) return;
+
+        const dir = btn.dataset.weekNav === 'prev' ? -1 : 1;
+        state.weekOffset += dir;                       // update offset
+        buildCalendarGrid(state.weekOffset);           // rebuild header/cells
+        refilterVisibleWeek(state, () => renderTasks(state, now)); // repaint data overlays
     });
 
     buildCalendarGrid(state.weekOffset);

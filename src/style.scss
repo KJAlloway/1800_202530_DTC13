@@ -266,11 +266,6 @@ body {
     --cal-row-h: 44px;
 }
 
-#calendar {
-    margin: 0;
-    padding: 0;
-}
-
 /* --- Grid layout --- */
 .calendar-grid {
     display: grid;
@@ -372,7 +367,7 @@ body {
 /* --- Mobile responsive --- */
 @media (max-width: 576px) {
     .calendar-grid {
-        grid-template-columns: 36px repeat(7, minmax(0, 1fr));
+        grid-template-columns: 36px repeat(7, minmax(37px, 1fr));
         gap: 0;
     }
 
@@ -381,6 +376,17 @@ body {
         padding-right: 4px;
         font-weight: 600;
     }
+
+    #calendarPage {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .tab-content {
+        padding: 20px 0;
+    }
+
 }
 
 /* ===== Home ===== */
