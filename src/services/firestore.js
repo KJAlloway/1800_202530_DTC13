@@ -3,11 +3,13 @@ import {
     auth, db,
     onSnapshot, doc, setDoc, updateDoc, addDoc, deleteDoc, collection,
     query, orderBy, serverTimestamp, getDocs
-} from './firebaseConfig.js';
+} from "./firebaseConfig.js";
+import { saveTasksLocally } from "./localStorages.js";
 
-// ----- Tasks -----
+// Tasks
 export async function addTask(task) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     return addDoc(collection(db, 'users', u.uid, 'tasks'), {
         ...task,
         completed: false,
@@ -16,42 +18,50 @@ export async function addTask(task) {
 }
 
 export function watchTasks(cb) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
-    return onSnapshot(collection(db, 'users', u.uid, 'tasks'), (snap) => {
-        cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
+    return onSnapshot(
+        collection(db, 'users', u.uid, 'tasks'),
+        (snap) => cb(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
 }
 
-export function toggleTaskComplete(id, completed) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+export async function toggleTaskComplete(id, completed) {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     return updateDoc(doc(db, 'users', u.uid, 'tasks', id), { completed });
 }
 
-export function deleteTask(id) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+export async function deleteTask(id) {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     return deleteDoc(doc(db, 'users', u.uid, 'tasks', id));
 }
 
-// ----- Events -----
+// Events
 export function watchEvents(cb) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
-    return onSnapshot(query(collection(db, 'users', u.uid, 'events'), orderBy('start', 'asc')), (snap) => {
-        cb(snap.docs.map(d => {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
+    return onSnapshot(
+        query(collection(db, 'users', u.uid, 'events'), orderBy('start', 'asc')),
+        (snap) => cb(snap.docs.map(d => {
             const { start, end, title } = d.data();
             return {
                 title: title || 'Event',
                 start: start?.toDate ? start.toDate() : new Date(start),
                 end: end?.toDate ? end.toDate() : new Date(end)
             };
-        }));
-    });
+        }))
+    );
 }
 
-// ----- Study blocks -----
+// Study Blocks
 export function watchStudyBlocks(cb) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
-    return onSnapshot(query(collection(db, 'users', u.uid, 'studyBlocks'), orderBy('start', 'asc')), (snap) => {
-        cb(snap.docs.map(d => {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
+    return onSnapshot(
+        query(collection(db, 'users', u.uid, 'studyBlocks'), orderBy('start', 'asc')),
+        (snap) => cb(snap.docs.map(d => {
             const { start, end, title } = d.data();
             return {
                 id: d.id,
@@ -59,12 +69,13 @@ export function watchStudyBlocks(cb) {
                 start: start?.toDate ? start.toDate() : new Date(start),
                 end: end?.toDate ? end.toDate() : new Date(end)
             };
-        }));
-    });
+        }))
+    );
 }
 
 export async function addStudyBlockForWindow(dayLabel, start, end) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     return addDoc(collection(db, 'users', u.uid, 'studyBlocks'), {
         title: 'Study',
         start,
@@ -74,11 +85,12 @@ export async function addStudyBlockForWindow(dayLabel, start, end) {
 }
 
 export async function deleteStudyBlock(id) {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     return deleteDoc(doc(db, 'users', u.uid, 'studyBlocks', id));
 }
 
-// ----- User admin -----
+// User
 export async function upsertUserMeta(user) {
     await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
@@ -88,7 +100,8 @@ export async function upsertUserMeta(user) {
 }
 
 export async function deleteAllUserData() {
-    const u = auth.currentUser; if (!u) throw new Error('Not authed');
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
     const subs = ['tasks', 'events', 'weeks', 'studyBlocks', 'baseSchedule', 'meta'];
     for (const name of subs) {
         const colRef = collection(db, 'users', u.uid, name);

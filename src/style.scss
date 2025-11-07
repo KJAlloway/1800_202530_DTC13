@@ -582,3 +582,19 @@ body {
     overflow: hidden;
     transition: height 0.1s ease !important;
 }
+
+.settings-card {
+    background-color: var(--bs-body-bg);
+    border-radius: 1.25rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.settings-card hr {
+    opacity: 0.15;
+}
+
+body.dark-mode .settings-card {
+    background-color: #2a2a2a;
+    border-color: #444;
+    color: #eee;
+}

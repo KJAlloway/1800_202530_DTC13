@@ -31,7 +31,6 @@ export function hydrateCalendarFromState(state) {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
 
-    // remove old labels
     grid.querySelectorAll('.time-slot .study-label').forEach(n => n.remove());
 
     const { start: weekStart } = visibleWeekRange(state.weekOffset);
@@ -69,5 +68,17 @@ export function refilterVisibleWeek(state, renderTasks) {
     state.events = state.eventsAll.filter(ev => ev.start < end && ev.end > start);
     state.studyBlocks = state.studyAll.filter(b => b.start < end && b.end > start);
     hydrateCalendarFromState(state);
-    renderTasks();
+    if (renderTasks) renderTasks();
+}
+
+// Render tasks
+export function renderTasks(tasks = []) {
+    const container = document.getElementById('task-list');
+    if (!container) return;
+    container.innerHTML = ''; // clear old tasks
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+        li.textContent = task.title || 'Untitled task';
+        container.appendChild(li);
+    });
 }
