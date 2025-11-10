@@ -24,7 +24,11 @@ import {
   attachSettingsActions,
 } from "./ui.js";
 import { prettyAuthError } from "./pretty.js";
-import { renderTasks, buildCalendarGrid } from "../calendar/grid.js";
+import {
+  renderTasks,
+  buildCalendarGrid,
+  hydrateCalendarFromState,
+} from "../calendar/grid.js";
 
 export function attachAuthFlows(state, now) {
   // Setup scaffolding + UI
@@ -119,8 +123,9 @@ export function attachAuthFlows(state, now) {
 
       // Load study blocks
       watchStudyBlocks((blocks) => {
-        state.studyBlocks = blocks;
-        buildCalendarGrid(state.weekOffset);
+        state.studyAll = blocks;
+        refilterVisibleWeek(state, () => renderTasks(state, now));
+        hydrateCalendarFromState(state); // ✅ refresh grid without rebuilding
       });
     } else {
       console.warn("[AUTH] User signed out");
