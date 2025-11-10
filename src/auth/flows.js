@@ -26,6 +26,7 @@ import {
 import { prettyAuthError } from "./pretty.js";
 import {
   renderTasks,
+  refilterVisibleWeek,
   buildCalendarGrid,
   hydrateCalendarFromState,
 } from "../calendar/grid.js";
