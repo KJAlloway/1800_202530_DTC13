@@ -121,4 +121,14 @@ export function attachSettingsActions(signOut, auth) {
         state.sortMode = "dueDate";
         renderTasks(state, () => new Date());
     });
+    // Sort alphabetically (A to Z)
+    document.getElementById("sortAlphabetic")?.addEventListener("click", () => {
+        state.sortMode = "alpha";
+        renderTasks(state, () => new Date());
+    });
+    // Sort by time required (low to high)
+    document.getElementById("sortTimeRequired")?.addEventListener("click", () => {
+        state.sortMode = "time";
+        renderTasks(state, () => new Date());
+    });
 }

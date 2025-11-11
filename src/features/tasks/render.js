@@ -73,9 +73,16 @@ export function renderTasks(state, now) {
   // ✅ sort mode switch
   if (state.sortMode === "dueDate") {
     tasks.sort((a, b) => new Date(a.t.dueDate) - new Date(b.t.dueDate));
-  } else {
-    tasks.sort((a, b) => b.p.score - a.p.score);
-  }
+  } else if (state.sortMode === "alpha") {
+  // Sort alphabetically by task name
+  tasks.sort((a, b) => (a.t.name || "").localeCompare(b.t.name || ""));
+} else if (state.sortMode === "time") {
+  // Sort by estimated time required (ascending)
+  tasks.sort((a, b) => (a.t.timeNeeded ?? 0) - (b.t.timeNeeded ?? 0));
+} else {
+  // Default: sort by priority score (descending)
+  tasks.sort((a, b) => b.p.score - a.p.score);
+}
 
   // ✅ render
   list.innerHTML = "";
