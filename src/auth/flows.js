@@ -25,10 +25,17 @@ import {
 } from "./ui.js";
 import { prettyAuthError } from "./pretty.js";
 import {
+<<<<<<< HEAD
     renderTasks,
     refilterVisibleWeek,
     buildCalendarGrid,
     hydrateCalendarFromState,
+=======
+  renderTasks,
+  refilterVisibleWeek,
+  buildCalendarGrid,
+  hydrateCalendarFromState,
+>>>>>>> c81320996efa604ddd234c2d606631a762fbc172
 } from "../calendar/grid.js";
 
 export function attachAuthFlows(state, now) {
