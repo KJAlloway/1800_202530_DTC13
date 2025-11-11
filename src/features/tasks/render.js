@@ -73,14 +73,7 @@ export function renderTasks(state, now) {
   // ✅ sort mode switch
   if (state.sortMode === "dueDate") {
     tasks.sort((a, b) => new Date(a.t.dueDate) - new Date(b.t.dueDate));
-  } else if (state.sortMode === "alpha") {
-    // Sort alphabetically by task name
-    tasks.sort((a, b) => (a.t.name || "").localeCompare(b.t.name || ""));
-  } else if (state.sortMode === "time") {
-    // Sort by estimated time required 
-    tasks.sort((a, b) => (a.t.timeNeeded ?? 0) - (b.t.timeNeeded ?? 0));
   } else {
-    // Default: sort by priority score
     tasks.sort((a, b) => b.p.score - a.p.score);
   }
 
@@ -98,8 +91,8 @@ export function renderTasks(state, now) {
       urgency >= 5
         ? "border-danger"
         : urgency >= 3
-          ? "border-warning"
-          : "border-success";
+        ? "border-warning"
+        : "border-success";
 
     const col = document.createElement("div");
     col.className = "col-12 col-md-6 col-lg-4";
@@ -107,21 +100,24 @@ export function renderTasks(state, now) {
       <div class="card shadow-sm border-0 border-start border-4 ${color}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0 ${t.completed ? "text-decoration-line-through" : ""
-      }">${t.name}</h5>
-            <span class="badge ${color.replace("border", "bg")} text-light">${t.importance ?? 3
-      }/5</span>
+            <h5 class="card-title mb-0 ${
+              t.completed ? "text-decoration-line-through" : ""
+            }">${t.name}</h5>
+            <span class="badge ${color.replace("border", "bg")} text-light">${
+      t.importance ?? 3
+    }/5</span>
           </div>
           <p class="mb-1"><strong>Due:</strong> ${date}</p>
           <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(
-        1
-      )}</p>
+            1
+          )}</p>
           <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(
-        2
-      )}</p>
+            2
+          )}</p>
           <div class="d-flex justify-content-between">
-            <button class="btn btn-sm ${t.completed ? "btn-secondary" : "btn-success"
-      } toggle-complete">
+            <button class="btn btn-sm ${
+              t.completed ? "btn-secondary" : "btn-success"
+            } toggle-complete">
               ${t.completed ? "Undo" : "Complete"}
             </button>
             <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>

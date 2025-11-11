@@ -1,4 +1,4 @@
-// calendar/calendarHelpers.js
+// src/calendarHelpers.js
 export function startOfWeekLocal(d = new Date()) {
     const day = d.getDay();            // 0..6 Sun..Sat
     const diffToMon = ((day + 6) % 7); // 0 if Monday
