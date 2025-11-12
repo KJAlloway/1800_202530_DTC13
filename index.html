@@ -98,6 +98,48 @@
 
                     <div id="homeApp" class="d-none">
                         <h3 class="text-center mb-4">My Tasks</h3>
+
+                        <!-- DASHBOARD (collapsible) -->
+                        <div class="dashboard card shadow-sm mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-semibold">Dashboard</h6>
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#dashboardBody" aria-expanded="true" aria-controls="dashboardBody">
+                                    Toggle
+                                </button>
+                            </div>
+
+                            <div id="dashboardBody" class="collapse show">
+                                <div class="card-body text-center">
+                                    <!-- Task Progress -->
+                                    <div class="mb-3">
+                                        <div class="fw-semibold">Assignments Progress</div>
+                                        <small class="text-muted">Completed <span id="tasksCompleted">0</span> /
+                                            <span id="tasksTotal">0</span></small>
+                                        <div class="progress mt-2" style="height: 8px;">
+                                            <div id="taskProgressBar" class="progress-bar bg-success"
+                                                style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <hr>
+
+                                    <!-- Sort Buttons -->
+                                    <div>
+                                        <h6 class="fw-semibold mb-2">Sort Tasks By</h6>
+                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                            <button id="sortDueDate" class="btn btn-outline-primary btn-sm">Due
+                                                Date</button>
+                                            <button id="sortAlphabetic"
+                                                class="btn btn-outline-primary btn-sm">Alpha</button>
+                                            <button id="sortTimeRequired"
+                                                class="btn btn-outline-primary btn-sm">Time Required</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="taskList" class="row gy-3"></div>
                         <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
                         <div class="floating-ui">
@@ -162,18 +204,6 @@
                     <h3 class="text-center mb-4 fw-semibold">Settings</h3>
 
                     <div class="settings-card mx-auto shadow-sm p-4 rounded-4" style="max-width: 480px;">
-                        <!-- Sort -->
-                        <div class="mb-4 text-center">
-                            <h6 class="fw-semibold mb-2">Sort Tasks By</h6>
-                            <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                <button id="sortDueDate" class="btn btn-outline-primary btn-sm">Due Date</button>
-                                <button id="sortAlphabetic" class="btn btn-outline-primary btn-sm">Alpha</button>
-                                <button id="sortTimeRequired" class="btn btn-outline-primary btn-sm">Time
-                                    Required</button>
-                            </div>
-                        </div>
-
-                        <hr>
 
                         <!-- Notifications -->
                         <div class="mb-3">
