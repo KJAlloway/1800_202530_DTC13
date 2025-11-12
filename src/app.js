@@ -1,6 +1,7 @@
 // app.js
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./style.scss";
+import { renderTasks } from "./features/tasks/render.js";
 
 import { attachAuthFlows } from "./auth/flows.js";
 import {
@@ -113,5 +114,47 @@ function attachCalendarClicks() {
 
 }
 
-export { state, now, refilterVisibleWeek };
+function updateDashboardProgress() {
+  const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  const total = tasks.length;
+  const completed = tasks.filter(t => t.completed).length;
 
+  document.getElementById('tasksTotal').textContent = total;
+  document.getElementById('tasksCompleted').textContent = completed;
+
+  const progress = total > 0 ? (completed / total) * 100 : 0;
+  document.getElementById('taskProgressBar').style.width = progress + '%';
+}
+
+updateDashboardProgress();
+
+window.addEventListener("DOMContentLoaded", () => {
+  // initial grid (same order)
+  attachCalendarClicks();
+  buildCalendarGrid(state.weekOffset);
+  hydrateCalendarFromState(state);
+
+  // auth + tasks/events/study live wires
+  attachAuthFlows(state, now);
+});
+
+// --- Dashboard Sort Buttons ---
+document.getElementById("sortDueDate")?.addEventListener("click", () => {
+  state.sortMode = "dueDate";
+  renderTasks(state, now);
+});
+
+document.getElementById("sortAlphabetic")?.addEventListener("click", () => {
+  state.sortMode = "alpha";
+  renderTasks(state, now);
+});
+
+document.getElementById("sortTimeRequired")?.addEventListener("click", () => {
+  state.sortMode = "time";
+  renderTasks(state, now);
+});
+
+// --- Update dashboard on load ---
+updateDashboardProgress();
+
+export { state, now, refilterVisibleWeek };

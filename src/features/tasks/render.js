@@ -1,13 +1,17 @@
 // features/tasks/render.js
-import { calculatePriority, calculateUrgency, calculateSlackMargin } from '../../priority.js';
-import { toggleTaskComplete, deleteTask } from '../../services/firestore.js';
+import {
+  calculatePriority,
+  calculateUrgency,
+  calculateSlackMargin,
+} from "../../priority.js";
+import { toggleTaskComplete, deleteTask } from "../../services/firestore.js";
 
 // Combine overlapping study intervals
 function mergeIntervals(intervals) {
   if (!intervals.length) return [];
   const arr = intervals
-    .map(i => ({ start: new Date(i.start), end: new Date(i.end) }))
-    .filter(i => i.end > i.start)
+    .map((i) => ({ start: new Date(i.start), end: new Date(i.end) }))
+    .filter((i) => i.end > i.start)
     .sort((a, b) => a.start - b.start);
 
   const merged = [arr[0]];
@@ -55,52 +59,85 @@ function priorityForTask(task, state, now) {
   return { timeAvail, margin, urgency, score };
 }
 
-
 export function renderTasks(state, now) {
-  const list = document.getElementById('taskList');
-  const emptyMsg = document.getElementById('noTasksMsg');
+  const list = document.getElementById("taskList");
+  const emptyMsg = document.getElementById("noTasksMsg");
   if (!list) return;
 
-  const scored = state.tasks
-    .map(t => ({ t, p: priorityForTask(t, state, now) }))
-    .sort((a, b) => b.p.score - a.p.score);
+  // build an array of tasks with computed priorities
+  let tasks = state.tasks.map((t) => ({
+    t,
+    p: priorityForTask(t, state, now),
+  }));
 
-  list.innerHTML = '';
-  if (emptyMsg) emptyMsg.classList.toggle('visible', scored.length === 0);
+  // ✅ sort mode switch
+  if (state.sortMode === "dueDate") {
+    tasks.sort((a, b) => new Date(a.t.dueDate) - new Date(b.t.dueDate));
+  } else if (state.sortMode === "alpha") {
+    // Sort alphabetically by task name
+    tasks.sort((a, b) => (a.t.name || "").localeCompare(b.t.name || ""));
+  } else if (state.sortMode === "time") {
+    // Sort by estimated time required (ascending)
+    tasks.sort((a, b) => (a.t.timeNeeded ?? 0) - (b.t.timeNeeded ?? 0));
+  } else {
+    // Default: sort by priority score (descending)
+    tasks.sort((a, b) => b.p.score - a.p.score);
+  }
 
-  scored.forEach(({ t, p }) => {
+  // ✅ render
+  list.innerHTML = "";
+  if (emptyMsg) emptyMsg.classList.toggle("visible", tasks.length === 0);
+
+  tasks.forEach(({ t, p }) => {
     const due = new Date(t.dueDate);
-    const date = isNaN(due) ? '—' : due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const date = isNaN(due)
+      ? "—"
+      : due.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     const urgency = p.urgency;
     const color =
-      urgency >= 5 ? 'border-danger' :
-        urgency >= 3 ? 'border-warning' : 'border-success';
+      urgency >= 5
+        ? "border-danger"
+        : urgency >= 3
+        ? "border-warning"
+        : "border-success";
 
-    const col = document.createElement('div');
-    col.className = 'col-12 col-md-6 col-lg-4';
+    const col = document.createElement("div");
+    col.className = "col-12 col-md-6 col-lg-4";
     col.innerHTML = `
       <div class="card shadow-sm border-0 border-start border-4 ${color}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0 ${t.completed ? 'text-decoration-line-through' : ''}">${t.name}</h5>
-            <span class="badge ${color.replace('border', 'bg')} text-light">${t.importance ?? 3}/5</span>
+            <h5 class="card-title mb-0 ${
+              t.completed ? "text-decoration-line-through" : ""
+            }">${t.name}</h5>
+            <span class="badge ${color.replace("border", "bg")} text-light">${
+      t.importance ?? 3
+    }/5</span>
           </div>
           <p class="mb-1"><strong>Due:</strong> ${date}</p>
-          <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(1)}</p>
-          <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(2)}</p>
+          <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(
+            1
+          )}</p>
+          <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(
+            2
+          )}</p>
           <div class="d-flex justify-content-between">
-            <button class="btn btn-sm ${t.completed ? 'btn-secondary' : 'btn-success'} toggle-complete">
-              ${t.completed ? 'Undo' : 'Complete'}
+            <button class="btn btn-sm ${
+              t.completed ? "btn-secondary" : "btn-success"
+            } toggle-complete">
+              ${t.completed ? "Undo" : "Complete"}
             </button>
             <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>
           </div>
         </div>
       </div>`;
 
-    col.querySelector('.toggle-complete')?.addEventListener('click', async () => {
-      await toggleTaskComplete(t.id, !t.completed);
-    });
-    col.querySelector('.delete-task')?.addEventListener('click', async () => {
+    col
+      .querySelector(".toggle-complete")
+      ?.addEventListener("click", async () => {
+        await toggleTaskComplete(t.id, !t.completed);
+      });
+    col.querySelector(".delete-task")?.addEventListener("click", async () => {
       await deleteTask(t.id);
     });
 
