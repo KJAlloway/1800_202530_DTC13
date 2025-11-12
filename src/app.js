@@ -26,6 +26,8 @@ const state = {
   availSlots: new Set(),
   clockOffsetMs: 0,
   weekOffset: 0,
+  baseStudyPattern: [], // [{ weekday: 0..6 (Mon..Sun), hour: 0..23 }]
+
 };
 const now = () => nowFn();
 
@@ -84,3 +86,4 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 export { state, now, refilterVisibleWeek };
+

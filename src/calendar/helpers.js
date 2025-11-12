@@ -24,3 +24,50 @@ export function buildIsoHourForCell(dayLabel, hour24) {
     cellDate.setHours(hour24, 0, 0, 0);
     return toIsoHourUTC(cellDate);
 }
+import { DAYS, HOURS, fmtHour } from './calendar/constants.js';
+import { visibleWeekRange, addDays, weekTitleText } from './calendar/range.js';
+import { buildCalendarGrid, hydrateCalendarFromState, refilterVisibleWeek } from './calendar/grid.js';
+import { Modal } from 'bootstrap';
+
+// Build a calendar grid into a specific container (modal), using your same layout
+function buildGridInto(gridEl, titleEl, weekOffset) {
+    if (!gridEl) return;
+    const { start } = visibleWeekRange(weekOffset);
+    const dayLabels = DAYS.map((d, i) => {
+        const dt = addDays(start, i);
+        const md = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        return `<div class="day-header"><div>${d}</div><small class="text-muted">${md}</small></div>`;
+    });
+    gridEl.innerHTML = `<div class="corner-cell"></div>${dayLabels.join('')}`;
+
+    HOURS.forEach(h => {
+        gridEl.insertAdjacentHTML('beforeend', `<div class="hour-label">${fmtHour(h)}</div>`);
+        DAYS.forEach(d => {
+            const key = `${d}-${h}`;
+            gridEl.insertAdjacentHTML('beforeend', `<div class="time-slot" data-key="${key}"></div>`);
+        });
+    });
+    if (titleEl) titleEl.textContent = weekTitleText(0);
+}
+
+// Paint “study” on the modal grid using the base pattern
+function hydrateBaseGridFromPattern(pattern, gridEl) {
+    if (!gridEl) return;
+    // clear previous labels/styles
+    gridEl.querySelectorAll('.time-slot').forEach(el => {
+        el.classList.remove('study');
+        el.querySelector('.study-label')?.remove();
+    });
+
+    for (const { weekday, hour } of pattern || []) {
+        const key = `${DAYS[weekday]}-${hour}`;
+        const el = gridEl.querySelector(`.time-slot[data-key="${key}"]`);
+        if (!el) continue;
+        el.classList.add('study');
+        const lab = document.createElement('span');
+        lab.className = 'study-label';
+        lab.innerHTML = 'Study<br>time';
+        lab.title = 'Study time';
+        el.appendChild(lab);
+    }
+}
