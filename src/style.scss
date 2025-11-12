@@ -345,6 +345,15 @@ body {
     background-clip: padding-box;
 }
 
+/* base-schedule (template) hours in the main calendar */
+.time-slot.study-base {
+    background: var(--bs-warning-bg, #024529);
+    border-color: none;
+}
+
+.time-slot.study-base .study-label {
+    color: #ffffff;
+}
 
 /* --- Label chip --- */
 .time-slot .study-label {

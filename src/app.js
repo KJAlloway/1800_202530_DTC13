@@ -15,6 +15,8 @@ import {
   deleteStudyBlock,
 } from "./services/firestore.js";
 import { loadTasksFromLocal } from "./services/localStorages.js";
+import { initBaseScheduleModal } from './calendar/modal.js';
+import { renderTasks } from './features/tasks/render.js';
 
 // Local app state (same shape as before)
 const state = {
@@ -27,9 +29,20 @@ const state = {
   clockOffsetMs: 0,
   weekOffset: 0,
   baseStudyPattern: [], // [{ weekday: 0..6 (Mon..Sun), hour: 0..23 }]
-
+  baseExclusions: new Set(),
 };
 const now = () => nowFn();
+
+window.addEventListener('DOMContentLoaded', () => {
+  attachCalendarClicks();
+  buildCalendarGrid(state.weekOffset);
+  hydrateCalendarFromState(state);
+
+  // initialize the Base Schedule modal module
+  initBaseScheduleModal(state, (s = state) => renderTasks(s, now()));
+
+  attachAuthFlows(state, now);
+});
 
 // Hour math from your main file
 function hourWindowForCell(dayLabel, hour24) {
@@ -60,30 +73,45 @@ async function toggleStudyHour(dayLabel, hour24) {
 
 // Calendar click
 function attachCalendarClicks() {
-  document.getElementById("calendar")?.addEventListener("click", async (e) => {
-    const cell = e.target.closest?.(".time-slot");
+  document.getElementById('calendar')?.addEventListener('click', async (e) => {
+    const cell = e.target.closest?.('.time-slot');
     if (!cell) return;
     const key = cell.dataset.key;
     if (!key) return;
-    const [dLabel, hStr] = key.split("-");
+
+    const [dLabel, hStr] = key.split('-');
     const hour24 = parseInt(hStr, 10);
+    if (Number.isNaN(hour24)) return;
+
+    // Compute this cell’s time window
+    const { start: weekStart } = visibleWeekRange(state.weekOffset);
+    const dayIndex = DAYS.indexOf(dLabel);
+    if (dayIndex < 0) return;
+    const slotStart = new Date(weekStart);
+    slotStart.setDate(weekStart.getDate() + dayIndex);
+    slotStart.setHours(hour24, 0, 0, 0);
+    const slotKey = slotStart.getTime();
+
+    // Is this a base-schedule slot?
+    const isBase = cell.classList.contains('study-base');
+
     try {
-      await toggleStudyHour(dLabel, hour24);
+      if (isBase) {
+        // Toggle exclusion for this week
+        state.baseExclusions ||= new Set();
+        if (state.baseExclusions.has(slotKey)) state.baseExclusions.delete(slotKey);
+        else state.baseExclusions.add(slotKey);
+        refilterVisibleWeek(state, () => { }); // repaint
+      } else {
+        // Regular behavior: toggle a persisted study block
+        await toggleStudyHour(dLabel, hour24);
+      }
     } catch (err) {
-      console.error("[CAL] toggle hour failed:", err);
+      console.error('[CAL] toggle hour failed:', err);
     }
   });
+
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  // initial grid (same order)
-  attachCalendarClicks();
-  buildCalendarGrid(state.weekOffset);
-  hydrateCalendarFromState(state);
-
-  // auth + tasks/events/study live wires
-  attachAuthFlows(state, now);
-});
 
 export { state, now, refilterVisibleWeek };
 

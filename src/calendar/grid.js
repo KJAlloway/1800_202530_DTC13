@@ -44,19 +44,22 @@ export function hydrateCalendarFromState(state) {
             const slotStart = new Date(weekStart);
             slotStart.setDate(weekStart.getDate() + di);
             slotStart.setHours(h, 0, 0, 0);
+
             const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
 
-            const inStudy = state.studyBlocks.some(b => b.start < slotEnd && b.end > slotStart);
-            const hasEvent = state.events.some(ev => ev.start < slotEnd && ev.end > slotStart);
+
+            const blk = state.studyBlocks.find(b => b.start < slotEnd && b.end > slotStart);
+            const inStudy = Boolean(blk);
+            const isBase = inStudy && blk._base === true;
 
             el.classList.toggle('study', inStudy);
-            el.classList.toggle('busy', hasEvent);
+            el.classList.toggle('study-base', isBase);
 
             if (inStudy) {
                 const lab = document.createElement('span');
                 lab.className = 'study-label';
                 lab.innerHTML = 'Study<br>time';
-                lab.title = 'Study time';
+                lab.title = isBase ? 'Base schedule' : 'Study time';
                 el.appendChild(lab);
             }
         }
@@ -66,10 +69,30 @@ export function hydrateCalendarFromState(state) {
 export function refilterVisibleWeek(state, renderTasks) {
     const { start, end } = visibleWeekRange(state.weekOffset);
     state.events = state.eventsAll.filter(ev => ev.start < end && ev.end > start);
-    state.studyBlocks = state.studyAll.filter(b => b.start < end && b.end > start);
+
+    // derive base-pattern blocks for this week
+    const weekStart = visibleWeekRange(state.weekOffset).start;
+    const derived = (state.baseStudyPattern || []).map(({ weekday, hour }) => {
+        const s = new Date(weekStart);
+        s.setDate(weekStart.getDate() + weekday);
+        s.setHours(hour, 0, 0, 0);
+        const e = new Date(s.getTime() + 60 * 60 * 1000);
+        return { start: s, end: e, _base: true };
+    })
+        .filter(b => !state.baseExclusions?.has(b.start.getTime()))
+
+        .filter(b => b.start < end && b.end > start);
+
+    // merge persisted study blocks with derived base ones
+    state.studyBlocks = [
+        ...state.studyAll.filter(b => b.start < end && b.end > start),
+        ...derived
+    ];
+
     hydrateCalendarFromState(state);
-    if (renderTasks) renderTasks();
+    renderTasks();
 }
+
 
 // Render tasks
 export function renderTasks(tasks = []) {
