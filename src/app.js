@@ -16,8 +16,7 @@ import {
   deleteStudyBlock,
 } from "./services/firestore.js";
 import { loadTasksFromLocal } from "./services/localStorages.js";
-import { initBaseScheduleModal } from './calendar/modal.js';
-import { renderTasks } from './features/tasks/render.js';
+import { initBaseScheduleModal } from "./calendar/modal.js";
 
 // Local app state (same shape as before)
 const state = {
@@ -34,7 +33,7 @@ const state = {
 };
 const now = () => nowFn();
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener("DOMContentLoaded", () => {
   attachCalendarClicks();
   buildCalendarGrid(state.weekOffset);
   hydrateCalendarFromState(state);
@@ -74,13 +73,13 @@ async function toggleStudyHour(dayLabel, hour24) {
 
 // Calendar click
 function attachCalendarClicks() {
-  document.getElementById('calendar')?.addEventListener('click', async (e) => {
-    const cell = e.target.closest?.('.time-slot');
+  document.getElementById("calendar")?.addEventListener("click", async (e) => {
+    const cell = e.target.closest?.(".time-slot");
     if (!cell) return;
     const key = cell.dataset.key;
     if (!key) return;
 
-    const [dLabel, hStr] = key.split('-');
+    const [dLabel, hStr] = key.split("-");
     const hour24 = parseInt(hStr, 10);
     if (Number.isNaN(hour24)) return;
 
@@ -94,36 +93,36 @@ function attachCalendarClicks() {
     const slotKey = slotStart.getTime();
 
     // Is this a base-schedule slot?
-    const isBase = cell.classList.contains('study-base');
+    const isBase = cell.classList.contains("study-base");
 
     try {
       if (isBase) {
         // Toggle exclusion for this week
         state.baseExclusions ||= new Set();
-        if (state.baseExclusions.has(slotKey)) state.baseExclusions.delete(slotKey);
+        if (state.baseExclusions.has(slotKey))
+          state.baseExclusions.delete(slotKey);
         else state.baseExclusions.add(slotKey);
-        refilterVisibleWeek(state, () => { }); // repaint
+        refilterVisibleWeek(state, () => {}); // repaint
       } else {
         // Regular behavior: toggle a persisted study block
         await toggleStudyHour(dLabel, hour24);
       }
     } catch (err) {
-      console.error('[CAL] toggle hour failed:', err);
+      console.error("[CAL] toggle hour failed:", err);
     }
   });
-
 }
 
 function updateDashboardProgress() {
-  const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
   const total = tasks.length;
-  const completed = tasks.filter(t => t.completed).length;
+  const completed = tasks.filter((t) => t.completed).length;
 
-  document.getElementById('tasksTotal').textContent = total;
-  document.getElementById('tasksCompleted').textContent = completed;
+  document.getElementById("tasksTotal").textContent = total;
+  document.getElementById("tasksCompleted").textContent = completed;
 
   const progress = total > 0 ? (completed / total) * 100 : 0;
-  document.getElementById('taskProgressBar').style.width = progress + '%';
+  document.getElementById("taskProgressBar").style.width = progress + "%";
 }
 
 updateDashboardProgress();
