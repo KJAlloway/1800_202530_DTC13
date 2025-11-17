@@ -1,4 +1,4 @@
-/* Imports
+/** Imports
 Imports firebase app initializer and auth functions from the modular Firebase v9+ SDK
 
 Imports Firestore initialization and a list of Firestore helpers
@@ -32,7 +32,7 @@ import {
   getDocFromServer,
 } from "firebase/firestore";
 
-/*
+/**
 Builds the config object required by initializeApp
 Values are taken from .env file
  */
@@ -44,19 +44,19 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-/*
+/**
 Initializes the Firebase app instance using the above config object.
 This app is the root Firebase application that other Firebase services attach to.
 */
 const app = initializeApp(firebaseConfig);
 
-/*
+/**
 Creates a Firebase Auth instance bound to the above app.
 Exporting this allows our app to read auth.currentUser, sign users in and out.
  */
 const auth = getAuth(app);
 
-/*
+/**
 Initializes Firestore and assigns it to db.
 experimentalAutoDetectLongPolling helps Firestore fall back to long-polling in environments
 where WebSockets/normal streaming are blocked.
