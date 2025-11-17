@@ -1,19 +1,19 @@
 // services/firestore.js
 import {
     auth, db,
-    onSnapshot, doc, setDoc, updateDoc, addDoc, deleteDoc, collection,
-    query, orderBy, serverTimestamp, getDocs
+    onSnapshot, doc, setDoc, updateDoc, addDoc, deleteDoc,
+    collection, query, orderBy, serverTimestamp, getDocs
 } from "./firebaseConfig.js";
-import { saveTasksLocally } from "./localStorages.js";
+import { arrayUnion, arrayRemove } from "firebase/firestore";
 
-// Tasks
+/* ----------------------- TASKS ----------------------- */
 export async function addTask(task) {
     const u = auth.currentUser;
     if (!u) throw new Error('Not authed');
     return addDoc(collection(db, 'users', u.uid, 'tasks'), {
         ...task,
         completed: false,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
     });
 }
 
@@ -38,24 +38,68 @@ export async function deleteTask(id) {
     return deleteDoc(doc(db, 'users', u.uid, 'tasks', id));
 }
 
-// Events
-export function watchEvents(cb) {
+/* ------------------- BASE SCHEDULE ------------------- */
+/** Pattern is a single doc: users/{uid}/baseSchedule/pattern */
+export function watchBasePattern(cb) {
     const u = auth.currentUser;
     if (!u) throw new Error('Not authed');
-    return onSnapshot(
-        query(collection(db, 'users', u.uid, 'events'), orderBy('start', 'asc')),
-        (snap) => cb(snap.docs.map(d => {
-            const { start, end, title } = d.data();
-            return {
-                title: title || 'Event',
-                start: start?.toDate ? start.toDate() : new Date(start),
-                end: end?.toDate ? end.toDate() : new Date(end)
-            };
-        }))
+    const ref = doc(db, 'users', u.uid, 'baseSchedule', 'pattern');
+    return onSnapshot(ref, (snap) => {
+        const data = snap.data() || {};
+        cb(Array.isArray(data.pattern) ? data.pattern : []);
+    });
+}
+
+export async function saveBasePattern(pattern) {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
+    const ref = doc(db, 'users', u.uid, 'baseSchedule', 'pattern');
+    await setDoc(ref, {
+        pattern: (pattern || []).map(p => ({ weekday: p.weekday, hour: p.hour })),
+        updatedAt: serverTimestamp()
+    }, { merge: true });
+}
+
+/**
+ * Exclusions are docs by week:
+ *   users/{uid}/baseScheduleExclusions/{weekId}
+ *   where doc.slots = [slotKey (Number millis), ...]
+ */
+export function watchBaseExclusions(weekId, cb) {
+    const u = auth.currentUser;
+    if (!u) throw new Error('Not authed');
+    const ref = doc(db, 'users', u.uid, 'baseScheduleExclusions', weekId);
+    return onSnapshot(ref, (snap) => {
+        const data = snap.data() || {};
+        const slots = Array.isArray(data.slots) ? data.slots : [];
+        // Replace the Set entirely; coerce to numbers
+        cb(new Set(slots.map(Number)));
+    });
+}
+
+export async function toggleBaseExclusion(weekId, slotKey, shouldExclude) {
+    const u = auth.currentUser;
+    if (!u) throw new Error("Not authed");
+
+    const ref = doc(db, "users", u.uid, "baseScheduleExclusions", weekId);
+    const keyNum = Number(slotKey);
+
+    console.log("[FIRESTORE] toggleBaseExclusion", {
+        weekId,
+        slotKey: keyNum,
+        shouldExclude,
+    });
+
+    // Single write; create doc if missing; transform the array without clearing it
+    await setDoc(
+        ref,
+        { slots: shouldExclude ? arrayUnion(keyNum) : arrayRemove(keyNum) },
+        { merge: true }
     );
 }
 
-// Study Blocks
+
+/* -------------------- STUDY BLOCKS ------------------- */
 export function watchStudyBlocks(cb) {
     const u = auth.currentUser;
     if (!u) throw new Error('Not authed');
@@ -73,7 +117,7 @@ export function watchStudyBlocks(cb) {
     );
 }
 
-export async function addStudyBlockForWindow(dayLabel, start, end) {
+export async function addStudyBlockForWindow(_dayLabel, start, end) {
     const u = auth.currentUser;
     if (!u) throw new Error('Not authed');
     return addDoc(collection(db, 'users', u.uid, 'studyBlocks'), {
@@ -90,7 +134,7 @@ export async function deleteStudyBlock(id) {
     return deleteDoc(doc(db, 'users', u.uid, 'studyBlocks', id));
 }
 
-// User
+/* ------------------------ USER ----------------------- */
 export async function upsertUserMeta(user) {
     await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
@@ -102,7 +146,7 @@ export async function upsertUserMeta(user) {
 export async function deleteAllUserData() {
     const u = auth.currentUser;
     if (!u) throw new Error('Not authed');
-    const subs = ['tasks', 'events', 'weeks', 'studyBlocks', 'baseSchedule', 'meta'];
+    const subs = ['tasks', 'weeks', 'studyBlocks', 'baseSchedule', 'meta'];
     for (const name of subs) {
         const colRef = collection(db, 'users', u.uid, name);
         const snap = await getDocs(colRef);

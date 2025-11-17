@@ -4,13 +4,16 @@ import {
   deleteAllUserData,
   upsertUserMeta,
   watchTasks,
-  watchEvents,
   watchStudyBlocks,
+  watchBasePattern,
+  watchBaseExclusions,
 } from "../services/firestore.js";
 import { buildCalendarGrid, refilterVisibleWeek } from "../calendar/grid.js";
+import { visibleWeekRange, isoWeekId } from "../calendar/range.js";
 import { renderTasks } from "../features/tasks/render.js";
 import { state } from "../app.js";
 
+/* -------------------- Auth UI gating -------------------- */
 export function setAuthUI(isAuthed) {
   const calendarTabBtn = document.querySelector("#calendar-tab");
   const settingsTabBtn = document.querySelector("#settings-tab");
@@ -34,6 +37,24 @@ export function setAuthUI(isAuthed) {
   }
 }
 
+/* -------------------- Week exclusions watcher -------------------- */
+let _unsubExcl = null;
+function watchCurrentWeekExclusions(state, now) {
+  const { start } = visibleWeekRange(state.weekOffset);
+  const weekId = isoWeekId(start);
+  if (_unsubExcl) _unsubExcl();
+  _unsubExcl = watchBaseExclusions(weekId, (setForWeek) => {
+    // Replace (don't merge) to avoid “revival” after snapshot races
+    console.log("[SNAPSHOT] exclusions update", Array.from(setForWeek));
+
+    state.baseExclusions = setForWeek;
+    state.baseExclusionsByWeek ||= new Map();
+    state.baseExclusionsByWeek.set(weekId, setForWeek);
+    refilterVisibleWeek(state, () => renderTasks(state, now));
+  });
+}
+
+/* -------------------- Scaffolding & week navigation -------------------- */
 export function attachScaffolding(state, now) {
   const homeTabBtn = document.querySelector("#home-tab");
   if (homeTabBtn) Tab.getOrCreateInstance(homeTabBtn).show();
@@ -41,19 +62,25 @@ export function attachScaffolding(state, now) {
   document.getElementById("authPanel")?.classList.remove("d-none");
   document.getElementById("homeApp")?.classList.add("d-none");
 
-  // ONE delegated listener for both mobile + desktop buttons
+  // Single delegated listener for both mobile/desktop week-nav
   document.getElementById("calendarPage")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-week-nav]");
     if (!btn) return;
 
     const dir = btn.dataset.weekNav === "prev" ? -1 : 1;
-    state.weekOffset += dir; // update offset
-    buildCalendarGrid(state.weekOffset); // rebuild header/cells
-    refilterVisibleWeek(state, () => renderTasks(state, now)); // repaint data overlays
+    state.weekOffset += dir;
+    buildCalendarGrid(state.weekOffset);
+    refilterVisibleWeek(state, () => renderTasks(state, now));
+    watchCurrentWeekExclusions(state, now);
   });
 
   buildCalendarGrid(state.weekOffset);
 }
+
+/* -------------------- Auth lifecycle -------------------- */
+let _unsubTasks = null;
+let _unsubStudy = null;
+let _unsubPattern = null;
 
 export function onAuthed(user, state, now) {
   const authPanel = document.getElementById("authPanel");
@@ -67,23 +94,33 @@ export function onAuthed(user, state, now) {
   homeApp?.classList.remove("d-none");
   setAuthUI(true);
 
-  const unsubTasks = watchTasks((arr) => {
+  // Live tasks
+  _unsubTasks = watchTasks((arr) => {
     state.tasks = arr;
     renderTasks(state, now);
   });
-  const unsubEvents = watchEvents((arr) => {
-    state.eventsAll = arr;
-    refilterVisibleWeek(state, () => renderTasks(state, now));
-  });
-  const unsubStudy = watchStudyBlocks((arr) => {
+
+  // Live persisted study blocks
+  _unsubStudy = watchStudyBlocks((arr) => {
     state.studyAll = arr;
     refilterVisibleWeek(state, () => renderTasks(state, now));
   });
 
+  // Live base pattern
+  _unsubPattern = watchBasePattern((pattern) => {
+    state.baseStudyPattern = pattern || [];
+    refilterVisibleWeek(state, () => renderTasks(state, now));
+  });
+
+  // Live base exclusions for the visible week
+  watchCurrentWeekExclusions(state, now);
+
+  // cleanup to call on sign-out
   return () => {
-    unsubTasks();
-    unsubEvents();
-    unsubStudy();
+    _unsubTasks?.(); _unsubTasks = null;
+    _unsubStudy?.(); _unsubStudy = null;
+    _unsubPattern?.(); _unsubPattern = null;
+    _unsubExcl?.(); _unsubExcl = null;
   };
 }
 
@@ -93,8 +130,17 @@ export function onLoggedOut() {
   document.getElementById("authPanel")?.classList.remove("d-none");
   document.getElementById("homeApp")?.classList.add("d-none");
   setAuthUI(false);
+
+  // clear volatile state so UI paints empty safely
+  state.tasks = [];
+  state.studyAll = [];
+  state.baseStudyPattern = [];
+  state.baseExclusions = new Set();
+  state.baseExclusionsByWeek = new Map();
+  refilterVisibleWeek(state, () => { });
 }
 
+/* -------------------- Settings / actions -------------------- */
 export function attachSettingsActions(signOut, auth) {
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
     try {
@@ -104,29 +150,25 @@ export function attachSettingsActions(signOut, auth) {
     }
   });
 
-  document
-    .getElementById("deleteInfoBtn")
-    ?.addEventListener("click", async () => {
-      try {
-        await deleteAllUserData();
-        alert("Your account info has been deleted.");
-      } catch (err) {
-        console.error("[DATA] delete failed:", err);
-        alert("Failed to delete account info.");
-      }
-    });
+  document.getElementById("delaccBtn")?.addEventListener("click", async () => {
+    try {
+      await deleteAllUserData();
+      alert("Your account info has been deleted.");
+    } catch (err) {
+      console.error("[DATA] delete failed:", err);
+      alert("Failed to delete account info.");
+    }
+  });
 
-  // Sort by due date
+  // Sort controls
   document.getElementById("sortDueDate")?.addEventListener("click", () => {
     state.sortMode = "dueDate";
     renderTasks(state, () => new Date());
   });
-  // Sort alphabetically (A to Z)
   document.getElementById("sortAlphabetic")?.addEventListener("click", () => {
     state.sortMode = "alpha";
     renderTasks(state, () => new Date());
   });
-  // Sort by time required (low to high)
   document.getElementById("sortTimeRequired")?.addEventListener("click", () => {
     state.sortMode = "time";
     renderTasks(state, () => new Date());
