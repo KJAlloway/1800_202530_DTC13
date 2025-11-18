@@ -170,6 +170,7 @@ function attachCalendarClicks() {
       // Firestore snapshots will repaint
     } catch (err) {
       console.error("[CAL] toggle hour failed:", err);
+      console.error("[CAL] toggle hour failed:", err);
     }
   });
 }
