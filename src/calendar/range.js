@@ -1,141 +1,187 @@
-// src/calendarHelpers.js
-// Helper functions for working with calendar dates and times.
-// These utilities provide:
-// - Local week start (Monday at 00:00).
-// - ISO-formatted UTC hour strings.
-// - A stable week identifier based on Monday's date.
-// - A helper to compute an ISO hour for a given day+hour cell.
+// calendar/range.js
+// Core date/time helpers for the calendar.
+// These functions define how "now", weeks, and hour slots are computed
+// across the app, including test-time clock offsetting.
+
+// A module-level offset (in milliseconds) applied to the real system time.
+// This is useful for testing: you can simulate that "now" is in a different
+// week without changing the actual system clock.
+let clockOffsetMs = 0;
 
 /**
- * Compute the local Monday (00:00) of the week containing the given date.
+ * Set the global clock offset (in milliseconds).
  *
- * If no date is provided, the current date/time is used.
+ * Passing a falsy value (0, null, undefined) resets the offset to 0.
  *
- * @param {Date} [date=new Date()] - The base date (defaults to "now").
- * @returns {Date} A new Date object set to Monday at 00:00 (local time)
- *   for the week that contains the given date.
+ * @param {number} ms - Milliseconds to offset from the real system time.
  */
-export function startOfWeekLocal(date = new Date()) {
-    // getDay() returns the day of week in local time:
-    //   0 = Sunday, 1 = Monday, ..., 6 = Saturday.
-    const dayOfWeek = date.getDay();
+export function setClockOffset(ms) {
+    clockOffsetMs = ms || 0;
+}
 
-    // Compute how many days we need to move backwards from "date"
-    // to reach Monday. The trick (day + 6) % 7 converts:
-    //   - Monday (1) -> 0
-    //   - Tuesday (2) -> 1
+/**
+ * Return a Date representing "now", adjusted by the current clock offset.
+ *
+ * @returns {Date} A new Date object for the current time plus clockOffsetMs.
+ */
+export function now() {
+    return new Date(Date.now() + clockOffsetMs);
+}
+
+/**
+ * Compute Monday at 00:00:00.000 (local time) for the week containing "d".
+ *
+ * If no argument is provided, "d" defaults to the current offset-aware now().
+ *
+ * @param {Date|number|string} [d=now()] - A date-like value (Date, timestamp, etc.).
+ * @returns {Date} A new Date object representing the local Monday at midnight
+ *   for that week.
+ */
+export function startOfWeekLocal(d = now()) {
+    // Clone the input so we do not mutate the original Date.
+    const x = new Date(d);
+
+    // getDay() returns day of week: 0 = Sun, 1 = Mon, ..., 6 = Sat.
+    // We want Monday as index 0, so we shift and wrap:
+    //   Sunday (0)   -> (0 + 6) % 7 = 6
+    //   Monday (1)   -> (1 + 6) % 7 = 0
+    //   Tuesday (2)  -> 1
     //   ...
-    //   - Sunday (0) -> 6
-    const diffToMonday = (dayOfWeek + 6) % 7;
+    const day = (x.getDay() + 6) % 7; // Mon=0..Sun=6
 
-    // Clone the Date so we don't mutate the original.
-    const monday = new Date(date);
+    // Reset time to midnight in local time.
+    x.setHours(0, 0, 0, 0);
 
-    // Reset the time to midnight (00:00:00.000) in local time.
-    monday.setHours(0, 0, 0, 0);
+    // Move backwards "day" days to land on Monday.
+    x.setDate(x.getDate() - day);
 
-    // Move back diffToMonday days to arrive at Monday of this week.
-    // setDate() handles month boundaries automatically.
-    monday.setDate(date.getDate() - diffToMonday);
-
-    return monday;
+    return x;
 }
 
 /**
- * Convert a local date/time to an ISO 8601 UTC string for the start of that hour.
+ * Return a new Date "n" days after (or before) the given date.
  *
- * - Minutes, seconds, and milliseconds are set to zero (start of hour).
- * - The output is in UTC with a trailing "Z" (e.g., "2025-11-17T22:00:00Z").
- *
- * @param {Date|string|number} localDate - A value accepted by new Date().
- * @returns {string} ISO 8601 string "YYYY-MM-DDTHH:MM:SSZ" in UTC.
+ * @param {Date|number|string} d - Base date.
+ * @param {number} n - Number of days to add (can be negative).
+ * @returns {Date} New Date shifted by n days.
  */
-export function toIsoHourUTC(localDate) {
-    // Clone into a Date instance to avoid mutating the input.
-    const dt = new Date(localDate);
-
-    // Truncate to the start of the local hour by zeroing out minutes,
-    // seconds, and milliseconds.
-    dt.setMinutes(0, 0, 0);
-
-    // getTime() gives milliseconds since the epoch for this LOCAL time.
-    const localTimeMs = dt.getTime();
-
-    // getTimezoneOffset() returns the difference, in minutes, between
-    // local time and UTC (local = UTC + offsetMinutes).
-    const offsetMinutes = dt.getTimezoneOffset();
-    const offsetMs = offsetMinutes * 60000;
-
-    // Subtract the offset to get the UTC timestamp for the same
-    // wall-clock time.
-    const utcTimeMs = localTimeMs - offsetMs;
-
-    // Create a new Date at that UTC timestamp and convert to ISO.
-    // Example: "2025-11-17T22:00:00.000Z"
-    const isoWithMillis = new Date(utcTimeMs).toISOString();
-
-    // Keep only "YYYY-MM-DDTHH:MM:SS" (19 characters) and then add "Z"
-    // to indicate UTC. Result: "YYYY-MM-DDTHH:MM:SSZ".
-    return isoWithMillis.slice(0, 19) + 'Z';
+export function addDays(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
 }
 
 /**
- * Compute a stable week identifier string for the week containing the given date.
+ * Return a new Date "n" weeks after (or before) the given date.
  *
- * The identifier is the UTC date of the Monday for that week in the
- * format "YYYY-MM-DD".
+ * This is just a convenience wrapper over addDays(d, n * 7).
  *
- * @param {Date} date - The date whose week we want to identify.
- * @returns {string} A string like "2025-11-17" (Monday in UTC).
+ * @param {Date|number|string} d - Base date.
+ * @param {number} n - Number of weeks to add (can be negative).
+ * @returns {Date} New Date shifted by n weeks.
  */
-export function isoWeekId(date) {
-    // Find Monday (00:00 local) for the week containing "date".
-    const mondayLocal = startOfWeekLocal(date);
-
-    const localMs = mondayLocal.getTime();
-    const offsetMinutes = mondayLocal.getTimezoneOffset();
-    const offsetMs = offsetMinutes * 60000;
-
-    // Convert the local Monday midnight to a UTC timestamp.
-    const mondayUtcMs = localMs - offsetMs;
-
-    // Convert to ISO and take only the date portion "YYYY-MM-DD".
-    // This gives a stable week id anchored on Monday in UTC.
-    return new Date(mondayUtcMs).toISOString().slice(0, 10);
+export function addWeeks(d, n) {
+    return addDays(d, n * 7);
 }
 
 /**
- * Build an ISO UTC hour string for a given day label and hour (24h),
- * relative to the current week.
+ * Compute the start and end of the visible week in local time,
+ * optionally shifted by a week offset.
  *
- * For example, if the current week’s Monday is 2025-11-17 and
- * we call buildIsoHourForCell('Wed', 15), this returns an ISO string
- * representing Wednesday at 15:00 (3 PM) local time, converted to UTC.
+ * - weekOffset = 0: this week (based on offset-aware now()).
+ * - weekOffset = 1: next week.
+ * - weekOffset = -1: previous week.
  *
- * @param {string} dayLabel - One of 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'.
- * @param {number} hour24  - Hour in 24-hour format (0..23).
- * @returns {string} ISO 8601 UTC string "YYYY-MM-DDTHH:MM:SSZ" for that cell.
+ * The returned interval is [start, end), where:
+ * - start = Monday 00:00 local for the visible week.
+ * - end   = Monday 00:00 local for the following week.
+ *
+ * @param {number} [weekOffset=0] - Number of weeks to shift from the current week.
+ * @returns {{start: Date, end: Date}} Object containing the start and end Dates.
  */
-export function buildIsoHourForCell(dayLabel, hour24) {
-    // Get Monday (00:00 local) for the current week.
-    const mondayLocal = startOfWeekLocal();
+export function visibleWeekRange(weekOffset = 0) {
+    const start = addWeeks(startOfWeekLocal(), weekOffset);
+    const end = addDays(start, 7);
+    return { start, end };
+}
 
-    // Map day labels to their offset from Monday.
-    // indexOf('Mon') -> 0, indexOf('Tue') -> 1, etc.
-    const dayOffset = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(
-        dayLabel,
-    );
+/**
+ * Build a human-readable "week title" string for the visible week,
+ * such as "Nov 17 – Nov 23".
+ *
+ * Uses the browser's default locale and shows:
+ * - Short month name.
+ * - Numeric day.
+ *
+ * @param {number} [weekOffset=0] - Week offset passed to visibleWeekRange.
+ * @returns {string} A title string for the week.
+ */
+export function weekTitleText(weekOffset = 0) {
+    const { start, end } = visibleWeekRange(weekOffset);
+    const opt = { month: 'short', day: 'numeric' };
 
-    // Clone Monday so we do not mutate the original Date.
-    const cellDate = new Date(mondayLocal);
+    const startLabel = start.toLocaleDateString(undefined, opt);
+    const lastDayOfWeek = addDays(end, -1);
+    const endLabel = lastDayOfWeek.toLocaleDateString(undefined, opt);
 
-    // Move forward dayOffset days from Monday to reach the correct weekday.
-    cellDate.setDate(mondayLocal.getDate() + dayOffset);
+    return `${startLabel} – ${endLabel}`;
+}
 
-    // Set the time for this cell to the requested hour (local time),
-    // with minutes, seconds, and milliseconds set to zero.
-    cellDate.setHours(hour24, 0, 0, 0);
+/* ------------------------------------------------------------------ */
+/* Unified helpers — use these everywhere for base schedule logic     */
+/* ------------------------------------------------------------------ */
 
-    // Finally, convert that local date/time to an ISO UTC hour string.
-    return toIsoHourUTC(cellDate);
+/**
+ * Monday-based week identifier in local time.
+ *
+ * Given a date-like value, this function finds the Monday of that week
+ * (using startOfWeekLocal) and returns its date in "YYYY-MM-DD" form.
+ *
+ * @param {Date|number|string} dateLike - A date-like value for which we want the week id.
+ * @returns {string} A string "YYYY-MM-DD" representing the local Monday of that week.
+ */
+export function isoWeekId(dateLike) {
+    const monday = startOfWeekLocal(dateLike);
+
+    const year = monday.getFullYear();
+    const month = String(monday.getMonth() + 1).padStart(2, '0'); // months are 0-based
+    const day = String(monday.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Compute a deterministic hour-slot key in local time.
+ *
+ * This is used as a unique identifier for a specific hour of a
+ * specific weekday in a given week.
+ *
+ * - weekStart must be Monday 00:00 local for the visible week
+ *   (typically visibleWeekRange(...).start).
+ * - weekday is an integer 0..6, where 0 = Monday and 6 = Sunday.
+ * - hour is an integer 0..23 in 24-hour time.
+ *
+ * The returned value is the millisecond timestamp (Number) for the
+ * start of that slot in local time. This is used:
+ * - To generate unique ids like "base-<slotKey>".
+ * - As keys in Sets (e.g., baseExclusions).
+ * - To reconstruct Date objects when painting the calendar.
+ *
+ * @param {Date} weekStart - Monday 00:00 local for the relevant week.
+ * @param {number} weekday - 0..6 (0 = Monday, 6 = Sunday).
+ * @param {number} hour - 0..23 (24-hour clock).
+ * @returns {number} Milliseconds since epoch for that slot's start time.
+ */
+export function slotKeyFor(weekStart, weekday, hour) {
+    // Clone weekStart to avoid mutating the caller's Date.
+    const slotStart = new Date(weekStart);
+
+    // Move forward "weekday" days from Monday to get the right weekday.
+    slotStart.setDate(weekStart.getDate() + weekday);
+
+    // Set the local time to the requested hour, with minutes/seconds/ms zeroed.
+    slotStart.setHours(hour, 0, 0, 0);
+
+    // Return the underlying timestamp as our slot key.
+    return slotStart.getTime();
 }
