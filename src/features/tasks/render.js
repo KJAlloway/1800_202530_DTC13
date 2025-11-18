@@ -17,6 +17,7 @@ import { toggleTaskComplete, deleteTask } from "../../services/firestore.js";
 //  - Takes an array of time intervals { start, end }
 //  - Combines overlapping or touching intervals into a single continuous block
 // [ [1–3], [2–4] ] → [ [1–4] ]
+
 function mergeIntervals(intervals) {
   if (!intervals.length) return [];
 
