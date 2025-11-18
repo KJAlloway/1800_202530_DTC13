@@ -17,6 +17,7 @@ import { toggleTaskComplete, deleteTask } from "../../services/firestore.js";
 //  - Takes an array of time intervals { start, end }
 //  - Combines overlapping or touching intervals into a single continuous block
 // [ [1–3], [2–4] ] → [ [1–4] ]
+
 function mergeIntervals(intervals) {
   if (!intervals.length) return [];
 
@@ -89,7 +90,7 @@ function studyMinutesUntil(dueDateStr, state, now) {
     if (segEnd > segStart) clipped.push({ start: segStart, end: segEnd });
   }
 
-  // 2) Base pattern across days n..due, minus exclusions
+  // 2) Base pattern across days due, minus exclusions
   const dayMs = 24 * 60 * 60 * 1000;
   const startDay = new Date(n); startDay.setHours(0, 0, 0, 0);
 
