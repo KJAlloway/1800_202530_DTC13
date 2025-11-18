@@ -11,7 +11,7 @@ import {
 import { buildCalendarGrid, refilterVisibleWeek } from "../calendar/grid.js";
 import { visibleWeekRange, isoWeekId } from "../calendar/range.js";
 import { renderTasks } from "../features/tasks/render.js";
-import { state } from "../app.js";
+import { state, now } from "../app.js";
 
 /* -------------------- Auth UI gating -------------------- */
 export function setAuthUI(isAuthed) {
@@ -115,6 +115,10 @@ export function onAuthed(user, state, now) {
   // Live base exclusions for the visible week
   watchCurrentWeekExclusions(state, now);
 
+  // Initialize task sort mode + button UI once we're authed.
+  state.sortMode = state.sortMode || "priority";
+  updateTaskSortButtons();
+
   // cleanup to call on sign-out
   return () => {
     _unsubTasks?.(); _unsubTasks = null;
@@ -159,18 +163,58 @@ export function attachSettingsActions(signOut, auth) {
       alert("Failed to delete account info.");
     }
   });
+}
 
-  // Sort controls
-  document.getElementById("sortDueDate")?.addEventListener("click", () => {
-    state.sortMode = "dueDate";
-    renderTasks(state, () => new Date());
+// ---------- Task sort controls ----------
+
+// Keep everything reading from the same place: state.sortMode.
+// We treat "priority" as the default when not set.
+function updateTaskSortButtons() {
+  const currentMode = state.sortMode || "priority";
+
+  const configs = [
+    { id: "sortDueDate", mode: "dueDate" },
+    { id: "sortTimeRequired", mode: "time" },
+  ];
+
+  configs.forEach(({ id, mode }) => {
+    const button = document.getElementById(id);
+    if (!button) return;
+
+    const isActive = currentMode === mode;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
   });
-  document.getElementById("sortAlphabetic")?.addEventListener("click", () => {
-    state.sortMode = "alpha";
-    renderTasks(state, () => new Date());
+}
+
+function applySortMode(mode) {
+  const currentMode = state.sortMode || "priority";
+
+  // Click same mode again → back to default ("priority")
+  // Click different mode → switch to that mode.
+  const nextMode = currentMode === mode ? "priority" : mode;
+  state.sortMode = nextMode;
+
+  updateTaskSortButtons();
+  renderTasks(state, now);
+}
+
+
+// Wire up listeners once at module load.
+// If the buttons don't exist on the current tab, this quietly does nothing.
+
+const sortDueDateButton = document.getElementById("sortDueDate");
+if (sortDueDateButton) {
+  sortDueDateButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    applySortMode("dueDate");
   });
-  document.getElementById("sortTimeRequired")?.addEventListener("click", () => {
-    state.sortMode = "time";
-    renderTasks(state, () => new Date());
+}
+
+const sortTimeRequiredButton = document.getElementById("sortTimeRequired");
+if (sortTimeRequiredButton) {
+  sortTimeRequiredButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    applySortMode("time");
   });
 }

@@ -192,12 +192,9 @@ export function renderTasks(state, now) {
   if (state.sortMode === "dueDate") {
     // Sort by due date (earliest first)
     tasks.sort((a, b) => new Date(a.t.dueDate) - new Date(b.t.dueDate));
-  } else if (state.sortMode === "alpha") {
-    // Sort alphabetically by task name
-    tasks.sort((a, b) => (a.t.name || "").localeCompare(b.t.name || ""));
   } else if (state.sortMode === "time") {
     // Sort by estimated time required (ascending)
-    tasks.sort((a, b) => (a.t.timeNeeded ?? 0) - (b.t.timeNeeded ?? 0));
+    tasks.sort((a, b) => (b.t.timeNeeded ?? 0) - (a.t.timeNeeded ?? 0));
   } else {
     // Default: sort by priority score (descending)
     tasks.sort((a, b) => b.p.score - a.p.score);
@@ -234,6 +231,21 @@ export function renderTasks(state, now) {
           ? "border-warning"
           : "border-success";
 
+    // Map numeric importance → label string
+    const importanceValue = t.importance ?? 3;
+    const importanceLabelMap = {
+      5: "Critical",
+      4: "High",
+      3: "Medium",
+      2: "Low",
+      1: "Nice to have",
+    };
+    const importanceLabel = importanceLabelMap[importanceValue] || "Medium";
+
+
+    const timeRequiredHours = Number(t.timeNeeded ?? 0);
+
+
     // Create a Bootstrap column wrapper for the card
     const col = document.createElement("div");
     col.className = "col-12 col-md-6 col-lg-4";
@@ -245,16 +257,20 @@ export function renderTasks(state, now) {
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="card-title mb-0 ${t.completed ? "text-decoration-line-through" : ""
       }">${t.name}</h5>
-            <span class="badge ${color.replace("border", "bg")} text-light">${t.importance ?? 3
-      }/5</span>
+            <span class="badge ${color.replace(
+        "border",
+        "bg"
+      )} text-light fw-normal">
+              Importance: ${importanceLabel}
+            </span>
           </div>
           <p class="mb-1"><strong>Due:</strong> ${date}</p>
           <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(
         1
       )}</p>
-          <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(
-        2
-      )}</p>
+          <p class="mb-2"><strong>Time required:</strong> ${timeRequiredHours.toFixed(
+        1
+      )} hrs</p>
           <div class="d-flex justify-content-between">
             <button class="btn btn-sm ${t.completed ? "btn-secondary" : "btn-success"
       } toggle-complete">

@@ -99,7 +99,16 @@
                     <div id="homeApp" class="d-none">
                         <h3 class="text-center mb-4">My Tasks</h3>
                         <div>
-                            <div
+                            <div class="btn-group" role="group" aria-label="Sort tasks">
+                                <button id="sortDueDate" type="button" class="btn btn-outline-secondary">
+                                    Due date
+                                </button>
+                                <button id="sortTimeRequired" type="button" class="btn btn-outline-secondary">
+                                    Time required
+                                </button>
+                            </div>
+
+                            <!-- <div
                                 class="d-flex flex-row justify-content-center align-items-baseline gap-1 flex-wrap mb-1">
                                 <h6 class="fw-semibold" style="font-size: .8rem">Sort By:</h6>
                                 <button id="sortDueDate" class="btn btn-outline-primary btn-sm"
@@ -108,7 +117,7 @@
                                 <button id="sortTimeRequired" class="btn btn-outline-primary btn-sm"
                                     style="font-size: .8rem">Time
                                     Required</button>
-                            </div>
+                            </div> -->
                         </div>
                         <div id="taskList" class="row gy-3"></div>
                         <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
@@ -140,7 +149,7 @@
                                                     <label for="timeNeeded" class="form-label">Time needed
                                                         (hrs)</label>
                                                     <input type="number" id="timeNeeded" class="form-control" step="0.5"
-                                                        min="0.5" placeholder="2" required>
+                                                        min="0.5" placeholder="..." required>
                                                 </div>
                                                 <div class="col-6">
                                                     <label for="importance" class="form-label">Importance</label>
