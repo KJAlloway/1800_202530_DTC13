@@ -90,7 +90,7 @@ function studyMinutesUntil(dueDateStr, state, now) {
     if (segEnd > segStart) clipped.push({ start: segStart, end: segEnd });
   }
 
-  // 2) Base pattern across days n..due, minus exclusions
+  // 2) Base pattern across days due, minus exclusions
   const dayMs = 24 * 60 * 60 * 1000;
   const startDay = new Date(n); startDay.setHours(0, 0, 0, 0);
 
@@ -253,9 +253,7 @@ export function renderTasks(state, now) {
           <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(
         1
       )}</p>
-          <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(
-        2
-      )}</p>
+          <p class="mb-2"><strong>Time required:</strong> ${t.timeNeeded?.toFixed(1) ?? "—"} hrs</p>
           <div class="d-flex justify-content-between">
             <button class="btn btn-sm ${t.completed ? "btn-secondary" : "btn-success"
       } toggle-complete">

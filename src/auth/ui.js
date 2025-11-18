@@ -1,5 +1,5 @@
 // auth/ui.js
-import { Tab } from "bootstrap";
+import { Tab, Modal } from "bootstrap";
 import {
   deleteAllUserData,
   upsertUserMeta,
@@ -140,8 +140,8 @@ export function onLoggedOut() {
   refilterVisibleWeek(state, () => { });
 }
 
-/* -------------------- Settings / actions -------------------- */
 export function attachSettingsActions(signOut, auth) {
+  /* -------- Logout button -------- */
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
     try {
       await signOut(auth);
@@ -150,13 +150,40 @@ export function attachSettingsActions(signOut, auth) {
     }
   });
 
-  document.getElementById("delaccBtn")?.addEventListener("click", async () => {
+  /* -------- Connecting the Delete Account (Modal) (Or well... Setting it up.) -------- */
+  const deleteBtn = document.getElementById("delaccBtn");
+  const confirmBtn = document.getElementById("confirmDeleteBtn");
+  const modalDelete = document.getElementById("confirmDelete");
+
+  // If it isn't the modalDelete which is the actual confirmation of deleting the account.
+  if (!modalDelete) {
+    // It'll warn to the console that it is not there.
+    console.warn("[SETTINGS] Delete modal missing from DOM.");
+    return;
+  }
+
+  const deleteModal = Modal.getOrCreateInstance(modalDelete);
+
+  // Open the modal
+  deleteBtn?.addEventListener("click", () => {
+    deleteModal.show();
+  });
+
+  // Confirm deletion
+  confirmBtn?.addEventListener("click", async () => {
     try {
+      // Logging purposes, alert comes after.
+      console.log("[DELETE] Wiping user data…");
       await deleteAllUserData();
-      alert("Your account info has been deleted.");
+      deleteModal.hide();
+      await signOut(auth);
+      // The main deletion right here to notify the user.
+      alert("Your account data has been deleted.");
     } catch (err) {
-      console.error("[DATA] delete failed:", err);
-      alert("Failed to delete account info.");
+      // If it doesn't work, it'll catch it and will alert them telling the user
+      // To alert that there was an error and they couldn't delete the data.
+      console.error("[DELETE] Failed to delete user data:", err);
+      alert("Error deleting account data. See console.");
     }
   });
 
