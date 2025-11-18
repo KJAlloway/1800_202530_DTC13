@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DTC13 PROJECTS</title>
+    <title>STACK</title>
 </head>
 
 
@@ -98,48 +98,18 @@
 
                     <div id="homeApp" class="d-none">
                         <h3 class="text-center mb-4">My Tasks</h3>
-
-                        <!-- DASHBOARD (collapsible) -->
-                        <div class="dashboard card shadow-sm mb-4">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-semibold">Dashboard</h6>
-                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#dashboardBody" aria-expanded="true" aria-controls="dashboardBody">
-                                    Toggle
-                                </button>
-                            </div>
-
-                            <div id="dashboardBody" class="collapse show">
-                                <div class="card-body text-center">
-                                    <!-- Task Progress -->
-                                    <div class="mb-3">
-                                        <div class="fw-semibold">Assignments Progress</div>
-                                        <small class="text-muted">Completed <span id="tasksCompleted">0</span> /
-                                            <span id="tasksTotal">0</span></small>
-                                        <div class="progress mt-2" style="height: 8px;">
-                                            <div id="taskProgressBar" class="progress-bar bg-success"
-                                                style="width: 0%;"></div>
-                                        </div>
-                                    </div>
-
-                                    <hr>
-
-                                    <!-- Sort Buttons -->
-                                    <div>
-                                        <h6 class="fw-semibold mb-2">Sort Tasks By</h6>
-                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
-                                            <button id="sortDueDate" class="btn btn-outline-primary btn-sm">Due
-                                                Date</button>
-                                            <button id="sortAlphabetic"
-                                                class="btn btn-outline-primary btn-sm">Alpha</button>
-                                            <button id="sortTimeRequired" class="btn btn-outline-primary btn-sm">Time
-                                                Required</button>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div>
+                            <div
+                                class="d-flex flex-row justify-content-center align-items-baseline gap-1 flex-wrap mb-1">
+                                <h6 class="fw-semibold" style="font-size: .8rem">Sort By:</h6>
+                                <button id="sortDueDate" class="btn btn-outline-primary btn-sm"
+                                    style="font-size: .8rem">Due
+                                    Date</button>
+                                <button id="sortTimeRequired" class="btn btn-outline-primary btn-sm"
+                                    style="font-size: .8rem">Time
+                                    Required</button>
                             </div>
                         </div>
-
                         <div id="taskList" class="row gy-3"></div>
                         <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
                         <div class="floating-ui">
@@ -167,7 +137,8 @@
 
                                             <div class="row g-2">
                                                 <div class="col-6">
-                                                    <label for="timeNeeded" class="form-label">Time needed (hrs)</label>
+                                                    <label for="timeNeeded" class="form-label">Time needed
+                                                        (hrs)</label>
                                                     <input type="number" id="timeNeeded" class="form-control" step="0.5"
                                                         min="0.5" placeholder="2" required>
                                                 </div>
@@ -194,6 +165,7 @@
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -253,7 +225,8 @@
                         <!-- Account -->
                         <div class="text-center">
                             <button id="logoutBtn" class="btn btn-outline-danger btn-sm px-4">Sign Out</button>
-                            <button id="delaccBtn" class="btn btn-outline-danger btn-sm px-4">Delete Account</button>
+                            <button id="delaccBtn" class="btn btn-outline-danger btn-sm px-4">Delete
+                                Account</button>
                         </div>
                     </div>
                 </div>
@@ -270,7 +243,8 @@
                     </div>
 
                     <div class="modal-body">
-                        <p class="text-muted mb-2">Click hours to toggle study time. This pattern will apply to every
+                        <p class="text-muted mb-2">Click hours to toggle study time. This pattern will apply to
+                            every
                             week.</p>
 
                         <div class="d-flex justify-content-between align-items-center mb-2">

@@ -1,159 +1,192 @@
 // app.js
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./style.scss";
-import { renderTasks } from "./features/tasks/render.js";
 
 import { attachAuthFlows } from "./auth/flows.js";
+import { renderTasks } from "./features/tasks/render.js";
 import {
   buildCalendarGrid,
   hydrateCalendarFromState,
   refilterVisibleWeek,
 } from "./calendar/grid.js";
 import { DAYS } from "./calendar/constants.js";
-import { visibleWeekRange, now as nowFn } from "./calendar/range.js";
+import {
+  visibleWeekRange,
+  now as nowFn,
+  isoWeekId,
+  slotKeyFor,
+} from "./calendar/range.js";
 import {
   addStudyBlockForWindow,
   deleteStudyBlock,
+  toggleBaseExclusion,
 } from "./services/firestore.js";
-import { loadTasksFromLocal } from "./services/localStorages.js";
 import { initBaseScheduleModal } from "./calendar/modal.js";
 
-// Local app state (same shape as before)
+// ---------- Local app state ----------
 const state = {
-  tasks: loadTasksFromLocal(), // <-- For localStorage
-  eventsAll: [],
-  studyAll: [],
-  studyBlocks: [],
-  events: [],
+  tasks: [],                // hydrated by auth flows
+  studyAll: [],             // persisted study blocks
+  studyBlocks: [],          // visible-week merged blocks
   availSlots: new Set(),
   clockOffsetMs: 0,
   weekOffset: 0,
-  baseStudyPattern: [], // [{ weekday: 0..6 (Mon..Sun), hour: 0..23 }]
-  baseExclusions: new Set(),
+  // Base schedule
+  baseStudyPattern: [],     // [{ weekday: 0..6, hour: 0..23 }]
+  baseExclusions: new Set(),          // exclusions for visible week
+  baseExclusionsByWeek: new Map(),    // optional cache
 };
+
 const now = () => nowFn();
 
-window.addEventListener("DOMContentLoaded", () => {
-  attachCalendarClicks();
-  buildCalendarGrid(state.weekOffset);
-  hydrateCalendarFromState(state);
-
-  // initialize the Base Schedule modal module
-  initBaseScheduleModal(state, (s = state) => renderTasks(s, now()));
-
-  attachAuthFlows(state, now);
-});
-
-// Hour math from your main file
+// ---------- Helpers ----------
 function hourWindowForCell(dayLabel, hour24) {
   const { start: weekStart } = visibleWeekRange(state.weekOffset);
-  const dayIndex = DAYS.indexOf(dayLabel); // 0..6 (Mon..Sun)
+  const dayIndex = DAYS.indexOf(dayLabel);
   if (dayIndex < 0) throw new Error(`Bad day label: ${dayLabel}`);
 
-  const slotStart = new Date(weekStart);
-  slotStart.setDate(weekStart.getDate() + dayIndex);
-  slotStart.setHours(hour24, 0, 0, 0);
-
-  const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+  const slotStartMs = slotKeyFor(weekStart, dayIndex, hour24);
+  const slotStart = new Date(slotStartMs);
+  const slotEnd = new Date(slotStartMs + 60 * 60 * 1000);
   return { start: slotStart, end: slotEnd };
+}
+
+// State-driven classifier: 'persisted' | 'base' | null
+function kindForSlot(state, dayLabel, hour24) {
+  const { start: weekStart } = visibleWeekRange(state.weekOffset);
+  const dayIndex = DAYS.indexOf(dayLabel);
+  if (dayIndex < 0) return null;
+
+  const slotKey = slotKeyFor(weekStart, dayIndex, hour24);
+  const slotStart = new Date(slotKey);
+  const slotEnd = new Date(slotKey + 60 * 60 * 1000);
+
+  // Persisted takes precedence
+  const hasPersisted = state.studyAll.some(
+    (b) => b.start < slotEnd && b.end > slotStart
+  );
+  if (hasPersisted) return { kind: "persisted", slotKey };
+
+  const inPattern = (state.baseStudyPattern || []).some(
+    (p) => p.weekday === dayIndex && p.hour === hour24
+  );
+  const isExcluded = state.baseExclusions?.has(slotKey);
+  if (inPattern && !isExcluded) return { kind: "base", slotKey };
+
+  return { kind: null, slotKey };
 }
 
 async function toggleStudyHour(dayLabel, hour24) {
   const { start, end } = hourWindowForCell(dayLabel, hour24);
   const existing = state.studyBlocks.find(
-    (b) =>
-      b.start.getTime() === start.getTime() && b.end.getTime() === end.getTime()
+    (b) => b.start.getTime() === start.getTime() && b.end.getTime() === end.getTime()
   );
-  if (existing) {
+  if (existing?.id) {
     await deleteStudyBlock(existing.id);
     return;
   }
+  console.log("[CLICK] creating new study block");
   await addStudyBlockForWindow(dayLabel, start, end);
 }
 
-// Calendar click
+// ---------- Calendar click wiring ----------
+let clicksAttached = false;
+let lastBaseClickMs = 0; // throttle to avoid accidental double-writes
+
 function attachCalendarClicks() {
+  if (clicksAttached) return;
+  clicksAttached = true;
+
   document.getElementById("calendar")?.addEventListener("click", async (e) => {
     const cell = e.target.closest?.(".time-slot");
     if (!cell) return;
     const key = cell.dataset.key;
     if (!key) return;
 
-    const [dLabel, hStr] = key.split("-");
+    const [dayLabel, hStr] = key.split("-");
     const hour24 = parseInt(hStr, 10);
     if (Number.isNaN(hour24)) return;
 
-    // Compute this cell’s time window
     const { start: weekStart } = visibleWeekRange(state.weekOffset);
-    const dayIndex = DAYS.indexOf(dLabel);
+    const dayIndex = DAYS.indexOf(dayLabel);
     if (dayIndex < 0) return;
-    const slotStart = new Date(weekStart);
-    slotStart.setDate(weekStart.getDate() + dayIndex);
-    slotStart.setHours(hour24, 0, 0, 0);
-    const slotKey = slotStart.getTime();
 
-    // Is this a base-schedule slot?
-    const isBase = cell.classList.contains("study-base");
+    const slotKey = slotKeyFor(weekStart, dayIndex, hour24);
+    const slotStart = new Date(slotKey);
+    const slotEnd = new Date(slotKey + 60 * 60 * 1000);
+
+    // Read current state (no optimistic mutation)
+    const inPattern = (state.baseStudyPattern || []).some(
+      (p) => p.weekday === dayIndex && p.hour === hour24
+    );
+    const isExcluded = state.baseExclusions?.has(slotKey) === true;
+    const persisted = state.studyAll.find((b) => b.start < slotEnd && b.end > slotStart);
+    const hasPersisted = !!persisted;
 
     try {
-      if (isBase) {
-        // Toggle exclusion for this week
-        state.baseExclusions ||= new Set();
-        if (state.baseExclusions.has(slotKey))
-          state.baseExclusions.delete(slotKey);
-        else state.baseExclusions.add(slotKey);
-        refilterVisibleWeek(state, () => {}); // repaint
-      } else {
-        // Regular behavior: toggle a persisted study block
-        await toggleStudyHour(dLabel, hour24);
+      if (inPattern) {
+        // Small throttle to prevent double-writes on base clicks
+        const t = Date.now();
+        if (t - lastBaseClickMs < 120) return;
+        lastBaseClickMs = t;
+
+        const { start } = visibleWeekRange(state.weekOffset);
+        const weekId = isoWeekId(start);
+
+        // Modifier = force UN-exclude (show base again)
+        const wantUnexclude = e.ctrlKey || e.metaKey || e.altKey;
+
+        if (hasPersisted) {
+          // If a persisted block exists on a base slot, clicking removes it.
+          await deleteStudyBlock(persisted.id);
+          return; // snapshot will repaint
+        }
+
+        if (isExcluded) {
+          if (wantUnexclude) {
+            // Ctrl/Cmd/Alt-click on an excluded base slot => un-exclude (show base again)
+            await toggleBaseExclusion(weekId, slotKey, false);
+            return;
+          }
+          // Default on excluded base: create a persisted block here
+          await addStudyBlockForWindow(dayLabel, slotStart, slotEnd);
+          return;
+        }
+
+        // Base is visible: default click excludes it for this week
+        await toggleBaseExclusion(weekId, slotKey, true);
+        return;
       }
+
+      // Not part of base pattern → normal persisted toggle
+      if (state.studyBlocks.some(b => b.start.getTime() === slotStart.getTime() && b.end.getTime() === slotEnd.getTime() && !b._base)) {
+        // remove persisted
+        const existing = state.studyBlocks.find(b => !b._base && b.start.getTime() === slotStart.getTime() && b.end.getTime() === slotEnd.getTime());
+        if (existing?.id) await deleteStudyBlock(existing.id);
+      } else {
+        // create persisted
+        await addStudyBlockForWindow(dayLabel, slotStart, slotEnd);
+      }
+      // Firestore snapshots will repaint
     } catch (err) {
+      console.error("[CAL] toggle hour failed:", err);
       console.error("[CAL] toggle hour failed:", err);
     }
   });
 }
 
-function updateDashboardProgress() {
-  const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.completed).length;
 
-  document.getElementById("tasksTotal").textContent = total;
-  document.getElementById("tasksCompleted").textContent = completed;
-
-  const progress = total > 0 ? (completed / total) * 100 : 0;
-  document.getElementById("taskProgressBar").style.width = progress + "%";
-}
-
-updateDashboardProgress();
-
+// ---------- Boot ----------
 window.addEventListener("DOMContentLoaded", () => {
-  // initial grid (same order)
   attachCalendarClicks();
   buildCalendarGrid(state.weekOffset);
   hydrateCalendarFromState(state);
 
-  // auth + tasks/events/study live wires
+  // Base Schedule modal init (Save persists the pattern)
+  initBaseScheduleModal(state, (s = state) => renderTasks(s, now()));
+
+  // Auth flows wire watchers for tasks/study/pattern/exclusions
   attachAuthFlows(state, now);
 });
-
-// --- Dashboard Sort Buttons ---
-document.getElementById("sortDueDate")?.addEventListener("click", () => {
-  state.sortMode = "dueDate";
-  renderTasks(state, now);
-});
-
-document.getElementById("sortAlphabetic")?.addEventListener("click", () => {
-  state.sortMode = "alpha";
-  renderTasks(state, now);
-});
-
-document.getElementById("sortTimeRequired")?.addEventListener("click", () => {
-  state.sortMode = "time";
-  renderTasks(state, now);
-});
-
-// --- Update dashboard on load ---
-updateDashboardProgress();
 
 export { state, now, refilterVisibleWeek };

@@ -13,7 +13,7 @@ const MONTH = 0;
 const DAY = 1;
 const HOUR = 2;
 const MINUTE = 3;
-let now = new Date();
+let currentTime = new Date();
 
 console.log(now); // Milliseconds since start of year
 console.log(getDate()); // Current month, day, hour, and minute

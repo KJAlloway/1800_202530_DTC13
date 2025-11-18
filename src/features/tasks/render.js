@@ -29,7 +29,7 @@ function mergeIntervals(intervals) {
     .filter((i) => i.end > i.start)
     .sort((a, b) => a.start - b.start);
 
-    // Start with the first interval as our initial merged block
+  // Start with the first interval as our initial merged block
   const merged = [arr[0]];
 
   // Walk through all subsequent intervals and merge if overlapping
@@ -90,12 +90,46 @@ function studyMinutesUntil(dueDateStr, state, now) {
     if (segEnd > segStart) clipped.push({ start: segStart, end: segEnd });
   }
 
+  // 2) Base pattern across days n..due, minus exclusions
+  const dayMs = 24 * 60 * 60 * 1000;
+  const startDay = new Date(n); startDay.setHours(0, 0, 0, 0);
+
+  for (let t = startDay.getTime(); t <= due.getTime(); t += dayMs) {
+    const d = new Date(t);
+    const weekday = (d.getDay() + 6) % 7; // Mon=0..Sun=6
+
+    // compute Monday of this date for week id
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - weekday);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekId = (new Date(weekStart.getTime() - weekStart.getTimezoneOffset() * 60000))
+      .toISOString().slice(0, 10); // YYYY-MM-DD (Mon UTC)
+
+    const excl = state.baseExclusionsByWeek?.get(weekId);
+
+    for (const p of state.baseStudyPattern || []) {
+      if (p.weekday !== weekday) continue;
+      const slotStart = new Date(d);
+      slotStart.setHours(p.hour, 0, 0, 0);
+      const slotEnd = new Date(slotStart.getTime() + 60 * 60 * 1000);
+      const slotKey = slotStart.getTime();
+
+      if (excl?.has?.(slotKey)) continue;         // skip excluded
+      if (!(slotStart < due && slotEnd > n)) continue;
+
+      const segStart = new Date(Math.max(slotStart.getTime(), n.getTime()));
+      const segEnd = new Date(Math.min(slotEnd.getTime(), due.getTime()));
+      if (segEnd > segStart) clipped.push({ start: segStart, end: segEnd });
+    }
+  }
+
+  // Merge overlaps (you already have mergeIntervals above)
   // Merge any overlapping segments to avoid double-counting time
   const merged = mergeIntervals(clipped);
 
   // Sum up total minutes across all merged segments
   let minutes = 0;
-  for (const seg of merged) 
+  for (const seg of merged)
 
     // Difference of Dates gives milliseconds → divide by 1000 * 60 to get minutes
     minutes += (seg.end - seg.start) / 60000;
@@ -198,8 +232,8 @@ export function renderTasks(state, now) {
       urgency >= 5
         ? "border-danger"
         : urgency >= 3
-        ? "border-warning"
-        : "border-success";
+          ? "border-warning"
+          : "border-success";
 
     // Create a Bootstrap column wrapper for the card
     const col = document.createElement("div");
@@ -210,24 +244,21 @@ export function renderTasks(state, now) {
       <div class="card shadow-sm border-0 border-start border-4 ${color}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="card-title mb-0 ${
-              t.completed ? "text-decoration-line-through" : ""
-            }">${t.name}</h5>
-            <span class="badge ${color.replace("border", "bg")} text-light">${
-      t.importance ?? 3
-    }/5</span>
+            <h5 class="card-title mb-0 ${t.completed ? "text-decoration-line-through" : ""
+      }">${t.name}</h5>
+            <span class="badge ${color.replace("border", "bg")} text-light">${t.importance ?? 3
+      }/5</span>
           </div>
           <p class="mb-1"><strong>Due:</strong> ${date}</p>
           <p class="mb-1"><strong>Study hrs left:</strong> ${p.timeAvail.toFixed(
-            1
-          )}</p>
+        1
+      )}</p>
           <p class="mb-2"><strong>Slack ratio:</strong> ${p.margin.toFixed(
-            2
-          )}</p>
+        2
+      )}</p>
           <div class="d-flex justify-content-between">
-            <button class="btn btn-sm ${
-              t.completed ? "btn-secondary" : "btn-success"
-            } toggle-complete">
+            <button class="btn btn-sm ${t.completed ? "btn-secondary" : "btn-success"
+      } toggle-complete">
               ${t.completed ? "Undo" : "Complete"}
             </button>
             <button class="btn btn-sm btn-outline-danger delete-task">Delete</button>

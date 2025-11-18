@@ -1,5 +1,5 @@
 // src/auth/flows.js
-import { Modal } from "bootstrap";
+import { Modal, Tab } from "bootstrap";
 import {
     auth,
     signInWithEmailAndPassword,
@@ -8,14 +8,6 @@ import {
     signOut,
 } from "../services/firebaseConfig.js";
 
-import {
-    addTask,
-    watchTasks,
-    addStudyBlockForWindow,
-    deleteStudyBlock,
-    watchStudyBlocks,
-} from "../services/firestore.js";
-import { saveTasksLocally } from "../services/localStorages.js";
 import { attachTaskForm } from "../features/tasks/form.js";
 import {
     attachScaffolding,
@@ -24,30 +16,20 @@ import {
     attachSettingsActions,
 } from "./ui.js";
 import { prettyAuthError } from "./pretty.js";
-import {
-    renderTasks,
-    refilterVisibleWeek,
-    buildCalendarGrid,
-    hydrateCalendarFromState,
-} from "../calendar/grid.js";
 
 export function attachAuthFlows(state, now) {
-    // Setup scaffolding + UI
+    // Initial UI scaffolding (hides app until authed, builds calendar shell)
     attachScaffolding(state, now);
     attachTaskForm();
     attachSettingsActions(signOut, auth);
 
-    // Inline Log In
+    // ---------- Inline Log In ----------
     const authEmailEl = document.getElementById("authEmail");
     const pwEl = document.getElementById("authPassword");
     const errBox = document.getElementById("authError");
-    const clearAuthError = () => {
-        if (errBox) errBox.textContent = "";
-    };
-    const showAuthError = (m) => {
-        if (errBox)
-            errBox.textContent = m || "Authentication error. Please try again.";
-    };
+
+    const clearAuthError = () => { if (errBox) errBox.textContent = ""; };
+    const showAuthError = (m) => { if (errBox) errBox.textContent = m || "Authentication error. Please try again."; };
 
     document.getElementById("doLogin")?.addEventListener("click", async () => {
         const email = authEmailEl?.value?.trim();
@@ -72,69 +54,52 @@ export function attachAuthFlows(state, now) {
         }
     });
 
-    // Sign Up
+    // ---------- Sign Up (modal form) ----------
     const suEmailEl = document.getElementById("suEmail");
     const suPwEl = document.getElementById("suPassword");
     const suPw2El = document.getElementById("suPassword2");
     const suErrBox = document.getElementById("signupError");
 
-    document
-        .getElementById("signupForm")
-        ?.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = suEmailEl?.value?.trim();
-            const pw = suPwEl?.value || "";
-            const pw2 = suPw2El?.value || "";
-            if (!email || !pw || !pw2) return;
-            if (pw !== pw2) {
-                if (suErrBox) suErrBox.textContent = "Passwords do not match.";
-                return;
-            }
-
-            try {
-                await createUserWithEmailAndPassword(auth, email, pw);
-                if (suErrBox) suErrBox.textContent = "";
-                const signupModalEl = document.getElementById("signupModal");
-                if (signupModalEl) Modal.getOrCreateInstance(signupModalEl).hide();
-                e.target.reset();
-            } catch (err) {
-                if (suErrBox) suErrBox.textContent = prettyAuthError(err);
-            }
-        });
-
-    // Auth state listener
-    let unsub = null;
-    onAuthStateChanged(auth, async (user) => {
-        if (unsub) {
-            unsub();
-            unsub = null;
+    document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = suEmailEl?.value?.trim();
+        const pw = suPwEl?.value || "";
+        const pw2 = suPw2El?.value || "";
+        if (!email || !pw || !pw2) return;
+        if (pw !== pw2) {
+            if (suErrBox) suErrBox.textContent = "Passwords do not match.";
+            return;
         }
+
+        try {
+            await createUserWithEmailAndPassword(auth, email, pw);
+            if (suErrBox) suErrBox.textContent = "";
+            const signupModalEl = document.getElementById("signupModal");
+            if (signupModalEl) Modal.getOrCreateInstance(signupModalEl).hide();
+            e.target.reset();
+        } catch (err) {
+            if (suErrBox) suErrBox.textContent = prettyAuthError(err);
+        }
+    });
+
+    // ---------- Auth state wiring ----------
+    let cleanup = null; // cleanup from onAuthed (unsub watchers)
+    onAuthStateChanged(auth, (user) => {
+        // clear previous listeners
+        if (cleanup) { try { cleanup(); } catch { } cleanup = null; }
+
         if (user) {
             console.log("[AUTH] Signed in as:", user.email);
             state.user = user;
-
-            unsub = onAuthed(user, state, now);
-
-            // Load tasks + save to localStorage
-            watchTasks((tasks) => {
-                state.tasks = tasks;
-                renderTasks(state);
-                saveTasksLocally(tasks);
-            });
-
-            // Load study blocks
-            watchStudyBlocks((blocks) => {
-                state.studyAll = blocks;
-                refilterVisibleWeek(state, () => renderTasks(state, now));
-                hydrateCalendarFromState(state); // ✅ refresh grid without rebuilding
-            });
+            // onAuthed sets up Firestore watchers (tasks, study, base pattern/exclusions)
+            cleanup = onAuthed(user, state, now);
         } else {
             console.warn("[AUTH] User signed out");
             state.user = null;
             onLoggedOut();
+            // return to Home tab
             const homeTabBtn = document.querySelector("#home-tab");
-            if (homeTabBtn)
-                (await import("bootstrap")).Tab.getOrCreateInstance(homeTabBtn).show();
+            if (homeTabBtn) Tab.getOrCreateInstance(homeTabBtn).show();
         }
     });
 }

@@ -20,9 +20,7 @@ import {
   serverTimestamp,
   getDocs,
 } from "./firebaseConfig.js";
-
-//Imports helper for saving tasks to local storage
-import { saveTasksLocally } from "./localStorages.js";
+import { arrayUnion, arrayRemove } from "firebase/firestore";
 
 // Tasks
 /** Add a task
@@ -35,8 +33,8 @@ import { saveTasksLocally } from "./localStorages.js";
  */
 export async function addTask(task) {
   const u = auth.currentUser;
-  if (!u) throw new Error("Not authed");
-  return addDoc(collection(db, "users", u.uid, "tasks"), {
+  if (!u) throw new Error('Not authed');
+  return addDoc(collection(db, 'users', u.uid, 'tasks'), {
     ...task,
     completed: false,
     createdAt: serverTimestamp(),
@@ -87,41 +85,63 @@ export async function deleteTask(id) {
   return deleteDoc(doc(db, "users", u.uid, "tasks", id));
 }
 
-// Events
-/** Real time watcher for events
- * Reads the currently logged in user.
- * if there is no user, prevents database access.
- * sets up a real time listener using onSnapshot.
- * creates a Firestore query which is an object that represents instructions
- * for Firestore about what documents you want and in what order.
- * orders the documents from the query by the start field, and in ascending order.
- * together the query object is not data, but a description for Firestore of how
- * to retrive that data. This is done in order to retrieve the documents in order.
- * maps each event doc into a title (default: "Event"), and a start and end timestamps
- * converted to js Date objects.
- * start?.toDate means if start exists and has a property called toDate, return that property
- * if not return undefined instead of an error, this prevents crashes.
- * If the time comes from Firestore in the form of a Firestore Timestamp, then
- * start.toDate() will work, if the time is just a number (js date or milliseconds since epoch),
- * then it creates a new js date.
- * Needed because Firestone can return things inconsistently
+/* ------------------- BASE SCHEDULE ------------------- */
+/** Pattern is a single doc: users/{uid}/baseSchedule/pattern */
+export function watchBasePattern(cb) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('Not authed');
+  const ref = doc(db, 'users', u.uid, 'baseSchedule', 'pattern');
+  return onSnapshot(ref, (snap) => {
+    const data = snap.data() || {};
+    cb(Array.isArray(data.pattern) ? data.pattern : []);
+  });
+}
+
+export async function saveBasePattern(pattern) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('Not authed');
+  const ref = doc(db, 'users', u.uid, 'baseSchedule', 'pattern');
+  await setDoc(ref, {
+    pattern: (pattern || []).map(p => ({ weekday: p.weekday, hour: p.hour })),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+}
+
+/**
+ * Exclusions are docs by week:
+ *   users/{uid}/baseScheduleExclusions/{weekId}
+ *   where doc.slots = [slotKey (Number millis), ...]
  */
-export function watchEvents(cb) {
+export function watchBaseExclusions(weekId, cb) {
+  const u = auth.currentUser;
+  if (!u) throw new Error('Not authed');
+  const ref = doc(db, 'users', u.uid, 'baseScheduleExclusions', weekId);
+  return onSnapshot(ref, (snap) => {
+    const data = snap.data() || {};
+    const slots = Array.isArray(data.slots) ? data.slots : [];
+    // Replace the Set entirely; coerce to numbers
+    cb(new Set(slots.map(Number)));
+  });
+}
+
+export async function toggleBaseExclusion(weekId, slotKey, shouldExclude) {
   const u = auth.currentUser;
   if (!u) throw new Error("Not authed");
-  return onSnapshot(
-    query(collection(db, "users", u.uid, "events"), orderBy("start", "asc")),
-    (snap) =>
-      cb(
-        snap.docs.map((d) => {
-          const { start, end, title } = d.data();
-          return {
-            title: title || "Event",
-            start: start?.toDate ? start.toDate() : new Date(start),
-            end: end?.toDate ? end.toDate() : new Date(end),
-          };
-        })
-      )
+
+  const ref = doc(db, "users", u.uid, "baseScheduleExclusions", weekId);
+  const keyNum = Number(slotKey);
+
+  console.log("[FIRESTORE] toggleBaseExclusion", {
+    weekId,
+    slotKey: keyNum,
+    shouldExclude,
+  });
+
+  // Single write; create doc if missing; transform the array without clearing it
+  await setDoc(
+    ref,
+    { slots: shouldExclude ? arrayUnion(keyNum) : arrayRemove(keyNum) },
+    { merge: true }
   );
 }
 
@@ -217,22 +237,14 @@ export async function upsertUserMeta(user) {
  */
 export async function deleteAllUserData() {
   const u = auth.currentUser;
-  if (!u) throw new Error("Not authed");
-  const subs = [
-    "tasks",
-    "events",
-    "weeks",
-    "studyBlocks",
-    "baseSchedule",
-    "meta",
-  ];
+  if (!u) throw new Error('Not authed');
+  const subs = ['tasks', 'weeks', 'studyBlocks', 'baseSchedule', 'meta'];
   for (const name of subs) {
-    const colRef = collection(db, "users", u.uid, name);
+    const colRef = collection(db, 'users', u.uid, name);
     const snap = await getDocs(colRef);
-    const deletions = snap.docs.map((d) =>
-      deleteDoc(doc(db, "users", u.uid, name, d.id))
-    );
+    const deletions = snap.docs.map(d => deleteDoc(doc(db, 'users', u.uid, name, d.id)));
     await Promise.all(deletions);
   }
-  await deleteDoc(doc(db, "users", u.uid));
+  await deleteDoc(doc(db, 'users', u.uid));
 }
+
