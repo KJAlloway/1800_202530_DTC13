@@ -15,13 +15,13 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active d-flex align-items-center gap-2" id="calendar-tab" data-bs-toggle="tab"
                     data-bs-target="#calendar" type="button" role="tab" aria-controls="calendar" aria-selected="true">
-                    <img src="../styles/calendar-month.svg" alt=""> Calendar
+                    <img src="../styles/calendar-month.svg" alt=""> Schedule
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link d-flex align-items-center gap-2" id="home-tab" data-bs-toggle="tab"
                     data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">
-                    <img src="../styles/home.svg" alt=""> Home
+                    <img src="../styles/note.svg" alt=""> Tasks
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -40,16 +40,12 @@
                     <div id="calendarPage">
                         <button data-week-nav="prev" class="btn btn-outline-light btn-sm d-sm-none text-dark"
                             type="button">←</button>
-
-                        <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
-                            <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt="">
-                            <h3 class="mb-0">Calendar</h3>
-                        </div>
-
-
                         <div class="calendar-container">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex justify-content-center gap-4 align-items-center mb-2">
+                                <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt=""
+                                    style="height: 40px;">
                                 <div>
+
                                     <h5 id="calendarWeekTitle" class="mb-0"></h5>
                                     <small class="text-muted">Block out your study time</small>
                                 </div>
@@ -104,29 +100,20 @@
 
                     <div id="homeApp" class="d-none">
                         <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
-                            <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt="">
+                            <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt=""
+                                style="height: 40px;">
                             <h3 class="mb-0">My Tasks</h3>
                         </div>
                         <div>
-                            <div class="btn-group" role="group" aria-label="Sort tasks">
-                                <button id="sortDueDate" type="button" class="btn btn-outline-secondary">
+                            <div class="btn-group"
+                                style="display: flex; justify-content: center; margin-bottom: 10px; ">
+                                <button id="sortDueDate" type="button" class="btn btn-outline-primary">
                                     Due date
                                 </button>
-                                <button id="sortTimeRequired" type="button" class="btn btn-outline-secondary">
+                                <button id="sortTimeRequired" type="button" class="btn btn-outline-primary">
                                     Time required
                                 </button>
                             </div>
-
-                            <!-- <div
-                                class="d-flex flex-row justify-content-center align-items-baseline gap-1 flex-wrap mb-1">
-                                <h6 class="fw-semibold" style="font-size: .8rem">Sort By:</h6>
-                                <button id="sortDueDate" class="btn btn-outline-primary btn-sm"
-                                    style="font-size: .8rem">Due
-                                    Date</button>
-                                <button id="sortTimeRequired" class="btn btn-outline-primary btn-sm"
-                                    style="font-size: .8rem">Time
-                                    Required</button>
-                            </div> -->
                         </div>
                         <div id="taskList" class="row gy-3"></div>
                         <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
@@ -192,9 +179,9 @@
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                 <div class="container py-4">
                     <div class="d-flex justify-content-center align-items-center gap-2 mb-3">
-                            <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt="">
-                            <h3 class="mb-0">Settings</h3>
-                        </div>
+                        <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt="" style="height: 40px;">
+                        <h3 class="mb-0">Settings</h3>
+                    </div>
 
                     <div class="settings-card mx-auto shadow-sm p-4 rounded-4" style="max-width: 480px;">
                         <!-- Notifications -->
