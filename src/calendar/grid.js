@@ -114,6 +114,12 @@ export function hydrateCalendarFromState(state) {
     const grid = document.getElementById('calendarGrid');
     if (!grid) return;
 
+    const noBaseScheduleMsg = document.getElementById('noBaseScheduleMsg');
+    if (noBaseScheduleMsg) {
+        const hasBaseSchedule = (state.baseStudyPattern?.length ?? 0) > 0;
+        noBaseScheduleMsg.style.display = hasBaseSchedule ? 'none' : 'block';
+    }
+
     // First, clear any previous styling, labels, or metadata from
     // all time-slot elements so we can repaint from scratch.
     grid.querySelectorAll('.time-slot').forEach((slotElement) => {
@@ -324,4 +330,20 @@ export function refilterVisibleWeek(state, after = () => { }) {
     state.studyBlocks = merged;
     hydrateCalendarFromState(state);
     after();
+}
+let calendarSyncTimeoutId = null;
+
+export function showCalendarSynced() {
+    const el = document.getElementById("calendarSync");
+    if (!el) return;
+
+    el.classList.remove("opacity-50");
+
+    if (calendarSyncTimeoutId !== null) {
+        clearTimeout(calendarSyncTimeoutId);
+    }
+
+    calendarSyncTimeoutId = setTimeout(() => {
+        el.classList.add("opacity-50");
+    }, 1500);
 }

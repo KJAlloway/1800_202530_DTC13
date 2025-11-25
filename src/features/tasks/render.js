@@ -207,6 +207,16 @@ export function renderTasks(state, now) {
   // Show or hide the "no tasks" message depending on whether there are tasks
   if (emptyMsg) emptyMsg.classList.toggle("visible", tasks.length === 0);
 
+  const noStudyMsg = document.getElementById("noStudyMsg");
+  // Show or hide the "no study blocks" message depending on whether there are study blocks
+
+  if (noStudyMsg) {
+    const noTasks = tasks.length === 0;
+    const noStudy = (state.studyBlocks?.length ?? 0) === 0;
+
+    noStudyMsg.style.display = noTasks && noStudy ? "block" : "none";
+  }
+
   // For each task + its computed priority info, build a card
   tasks.forEach(({ t, p }) => {
     // Convert due date string to Date

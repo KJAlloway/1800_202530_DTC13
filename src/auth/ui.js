@@ -8,7 +8,7 @@ import {
   watchBasePattern,
   watchBaseExclusions,
 } from "../services/firestore.js";
-import { buildCalendarGrid, refilterVisibleWeek } from "../calendar/grid.js";
+import { buildCalendarGrid, refilterVisibleWeek, showCalendarSynced } from "../calendar/grid.js";
 import { visibleWeekRange, isoWeekId } from "../calendar/range.js";
 import { renderTasks } from "../features/tasks/render.js";
 import { state, now } from "../app.js";
@@ -71,6 +71,7 @@ export function attachScaffolding(state, now) {
     state.weekOffset += dir;
     buildCalendarGrid(state.weekOffset);
     refilterVisibleWeek(state, () => renderTasks(state, now));
+    showCalendarSynced();
     watchCurrentWeekExclusions(state, now);
   });
 
@@ -104,12 +105,14 @@ export function onAuthed(user, state, now) {
   _unsubStudy = watchStudyBlocks((arr) => {
     state.studyAll = arr;
     refilterVisibleWeek(state, () => renderTasks(state, now));
+    showCalendarSynced();
   });
 
   // Live base pattern
   _unsubPattern = watchBasePattern((pattern) => {
     state.baseStudyPattern = pattern || [];
     refilterVisibleWeek(state, () => renderTasks(state, now));
+    showCalendarSynced();
   });
 
   // Live base exclusions for the visible week

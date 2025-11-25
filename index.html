@@ -39,15 +39,32 @@
                 <div id="calendarInner">
                     <div id="calendarPage">
                         <button data-week-nav="prev" class="btn btn-outline-light btn-sm d-sm-none text-dark"
-                            type="button">←</button>
+                            type="button"><span
+                                style="color: black !important; font-weight: bolder !important;">⬅</span></button>
                         <div class="calendar-container">
-                            <div class="d-flex justify-content-center gap-4 align-items-center mb-2">
-                                <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt=""
-                                    style="height: 40px;">
-                                <div>
+                            <div>
 
-                                    <h5 id="calendarWeekTitle" class="mb-0"></h5>
-                                    <small class="text-muted">Block out your study time</small>
+                                <div class="d-flex justify-content-center gap-4 align-items-center mb-2">
+                                    <img src="../styles/brand-stackoverflow.svg" class="title-logo" alt=""
+                                        style="height: 40px;">
+                                    <div>
+
+                                        <h5 id="calendarWeekTitle" class="mb-0"></h5>
+                                        <small class="text-muted">Block out your study time</small>
+
+
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <small id="calendarSync" class="text-secondary opacity-50"
+                                        style="transition: opacity 0.3s;">
+                                        Synced ✓
+                                    </small>
+                                    <div id="noBaseScheduleMsg" class="text-muted mt-2"
+                                        style="display: none; font-size: 0.85rem; margin-bottom: 5px;">
+                                        You haven’t created a base schedule yet! <br>
+                                        Add repeating weekly study blocks with the Base Schedule button below.
+                                    </div>
                                 </div>
                             </div>
 
@@ -56,7 +73,8 @@
                             </div>
                         </div>
                         <button data-week-nav="next" class="btn btn-outline-light btn-sm d-sm-none text-dark"
-                            type="button">→</button>
+                            type="button"><span
+                                style="color: black !important; font-weight: bolder !important;">➡</span></button>
                         <div class="btn-group d-none d-sm-flex">
                             <button data-week-nav="prev" class="btn btn-outline-secondary btn-sm" type="button">←
                                 Prev</button>
@@ -64,6 +82,11 @@
                                 →</button>
                         </div>
                     </div>
+                </div>
+                <!-- Base Schedule -->
+                <div class="d-flex justify-content-center align-items-center mb-3 px-2" style="margin-top: 10px;">
+                    <button id="openBaseSchedule" class="btn btn-outline-primary btn-sm">Set your base
+                        schedule</button>
                 </div>
             </div>
 
@@ -117,6 +140,9 @@
                         </div>
                         <div id="taskList" class="row gy-3"></div>
                         <div id="noTasksMsg" class="text-center text-muted mt-3">No tasks yet — add one below!</div>
+                        <div id="noStudyMsg" class="text-center text-muted mt-1" style="display: none;">
+                            Tip: You can block out study time in the Calendar tab to improve task scheduling.
+                        </div>
                         <div class="floating-ui">
                             <button id="toggleTaskForm" class="btn btn-primary add-btn" type="button"
                                 data-bs-toggle="collapse" data-bs-target="#taskFormCollapse" aria-expanded="false"
@@ -217,22 +243,11 @@
                                 <label class="btn btn-outline-secondary btn-sm" for="themeDark">Dark</label>
                             </div>
                         </div>
-
                         <hr>
-
-                        <!-- Base Schedule -->
-                        <div class="d-flex justify-content-center align-items-center mb-3 px-2">
-                            <button id="openBaseSchedule" class="btn btn-outline-primary btn-sm">Set your base
-                                schedule</button>
-                        </div>
-
-
-
-                        <hr>
-
                         <!-- Account -->
-                        <div class="text-center">
-                            <button id="logoutBtn" class="btn btn-outline-danger btn-sm px-4">Sign Out</button>
+                        <div class="text-center d-flex flex-column gap-2"">
+                            <h6 class=" fw-semibold mb-2">Account</h6>
+                            <button id=" logoutBtn" class="btn btn-outline-danger btn-sm px-4">Sign Out</button>
                             <button id="delaccBtn" class="btn btn-outline-danger btn-sm px-4">Delete
                                 Account</button>
                         </div>
