@@ -10,9 +10,9 @@ Developed for the COMP 1800 course, this project applies User-Centred Design pra
 
 ## Features
 
-- Browse a list of curated hiking trails with images and details
-- Mark and unmark trails as favorites
-- View a personalized list of favorite hikes
+- Set a base weekly and/or unique schedule
+- Create task cards, and sort them by due date, time required, or priority
+- Complete or delete task cards
 - Responsive design for desktop and mobile
 
 ---
@@ -113,9 +113,6 @@ Once the application is running:
 
 - No current support for reminders
 - Task due date set to end of the day
-
-- Limited trail details (e.g., no live trail conditions).
-- Accessibility features can be further improved.
 
 ### Future Work
 
