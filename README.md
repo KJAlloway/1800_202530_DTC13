@@ -1,13 +1,12 @@
-# Elmo Hikes
-
+# STACK
 
 ## Overview
-Elmo Hikes is a client-side JavaScript web application that helps users discover and explore hiking trails. The app displays a curated list of hike trails, each with details such as name, location, difficulty, and an image. Users can browse the list and mark their favorite trails for easy access later.
 
-Developed for the COMP 1800 course, this project applies User-Centred Design practices and agile project management, and demonstrates integration with Firebase backend services for storing user favorites.
+STACK is a client-side JavaScript web application that helps users manage their time in accordance with assignments and tasks. This app allows the user to set their study schedule and create tasks with attributes like a tittle, a due date, the time required to complete, and importance level.
+
+Developed for the COMP 1800 course, this project applies User-Centred Design practices, agile project management, and demonstrates integration with Firebase backend services for storing user tasks and study schedule.
 
 ---
-
 
 ## Features
 
@@ -18,7 +17,6 @@ Developed for the COMP 1800 course, this project applies User-Centred Design pra
 
 ---
 
-
 ## Technologies Used
 
 - **Frontend**: HTML, CSS, JavaScript
@@ -27,7 +25,6 @@ Developed for the COMP 1800 course, this project applies User-Centred Design pra
 - **Database**: Firestore
 
 ---
-
 
 ## Usage
 
@@ -40,61 +37,93 @@ To run the application locally:
 
 Once the application is running:
 
-1.  Browse the list of hiking trails displayed on the main page.
-2.  Click the heart icon (or similar) to mark a trail as a favorite.
-3.  View your favorite hikes in the favorites section.
+1.  Set your base study schedule in the Schedule Page
+2.  Add tasks to your Tasks page
+3.  Sort your tasks based on Due Date, time required to complete, or by priority as a default
 
 ---
-
 
 ## Project Structure
 
 ```
-elmo-hikes/
+1800_202530_DTC13/
 ├── src/
+│   ├── auth/
+│   │   ├── flows.js
+│   │   ├── pretty.js
+│   │   ├── ui.js
+│   ├── calendar/
+│   │   ├── constants.js
+│   │   ├── grid.js
+│   │   ├── helpers.js
+│   │   ├── modal.js
+│   │   ├── range.js
+│   ├── features/
+│   │   ├── tasks/
+│   │   │   ├── form.js
+│   │   │   ├── render.js.js
+│   ├── services/
+│   │   ├── firebaseConfig.js
+│   │   ├── firestore.js
+│   │   ├── localStorage.js
+│   ├── app.js
 │   ├── main.js
+│   ├── priority.js
+│   ├── state.js
+│   ├── style.scss
+│   ├── time.js
 ├── styles/
-│   └── style.css
-├── public/
-├── images/
+│   ├── bell.svg
+│   ├── brand_stackoverflow.svg
+│   ├── calendar-month.svg
+│   ├── home.svg
+│   ├── note.svg
+│   ├── settings.svg
+├── .env.local
+├── .gitignore
 ├── index.html
+├── package-lock.json
 ├── package.json
 ├── README.md
+
+
+
 ```
 
 ---
 
-
 ## Contributors
-- **Your Name** - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Loves solving Rubik's Cubes in under a minute.
-- **Teammate Name** - BCIT CST Student, Frontend enthusiast with a knack for creative design. Fun fact: Has a collection of over 50 houseplants.
+
+- **Andrew Solomko** - BCIT CST Student with a passion for outdoor adventures and user-friendly applications. Fun fact: Loves solving Rubik's Cubes in under a minute.
+- **Kelsen Alloway** - BCIT CST Student, Frontend enthusiast with a knack for creative design. Fun fact: Has a collection of over 50 houseplants.
+- **Donovan Larkin Newcombe** - BCIT CST Student, Frontend enthusiast with a knack for creative design. Fun fact: Has a collection of over 50 houseplants.
 
 ---
-
 
 ## Acknowledgments
 
-- Trail data and images are for demonstration purposes only.
-- Code snippets were adapted from resources such as [Stack Overflow](https://stackoverflow.com/) and [MDN Web Docs](https://developer.mozilla.org/).
-- Icons sourced from [FontAwesome](https://fontawesome.com/) and images from [Unsplash](https://unsplash.com/).
+- Icons sourced from **\_\_\_\_**
+- Code snippets were adapted from resources such as [Bootstrap](getbootstrap.com) and [ChatGPT5](chatgtp.com).
 
 ---
 
-
 ## Limitations and Future Work
+
 ### Limitations
+
+- No current support for reminders
+- Task due date set to end of the day
 
 - Limited trail details (e.g., no live trail conditions).
 - Accessibility features can be further improved.
 
 ### Future Work
 
-- Implement map view and trailhead directions.
-- Add filtering and sorting options (e.g., by difficulty, distance).
-- Create a dark mode for better usability in low-light conditions.
+- Implement reminders functionality
+- Add optional ability to set time of day as a part of the due date
+- Add dark mode functionality
 
 ---
-
 
 ## License
 
