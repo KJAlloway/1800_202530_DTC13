@@ -102,7 +102,7 @@ Once the application is running:
 
 ## Acknowledgments
 
-- Icons sourced from **\_\_\_\_**
+- Icons sourced from [tabler icons](https://tabler.io/icons)
 - Code snippets were adapted from resources such as [Bootstrap](getbootstrap.com) and [ChatGPT5](chatgtp.com).
 
 ---
