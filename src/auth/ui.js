@@ -21,7 +21,11 @@ import {
  * Imports render tasks function
  * Imports state and now
  */
-import { buildCalendarGrid, refilterVisibleWeek } from "../calendar/grid.js";
+import {
+  buildCalendarGrid,
+  refilterVisibleWeek,
+  showCalendarSynced,
+} from "../calendar/grid.js";
 import { visibleWeekRange, isoWeekId } from "../calendar/range.js";
 import { renderTasks } from "../features/tasks/render.js";
 import { state, now } from "../app.js";
@@ -224,7 +228,7 @@ export function onLoggedOut() {
   state.baseStudyPattern = [];
   state.baseExclusions = new Set();
   state.baseExclusionsByWeek = new Map();
-  refilterVisibleWeek(state, () => { }); //Repaint empty calendar
+  refilterVisibleWeek(state, () => {}); //Repaint empty calendar
 }
 
 export function attachSettingsActions(signOut, auth) {
